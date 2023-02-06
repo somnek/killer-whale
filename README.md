@@ -3,7 +3,7 @@
 </p>
 
 # -------------------
-# killer-whale
+# killer-whale 🐳
 Container manager TUI for terminal dwellers ☠️
 
 
