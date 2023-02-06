@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -9,29 +8,30 @@ import (
 )
 
 func main() {
-	_, err := docker.NewClientFromEnv()
+	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// cli
 	var rootCmd = &cobra.Command{
 		Use:   "whale",
 		Short: "A Docker cli",
 	}
 
 	var ctnCmd = &cobra.Command{
-		Use:   "ctn",
+		Use:   "container",
 		Short: "List all containers",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("listing containers..")
+			listContainers(client)
 		},
 	}
 
 	var imgCmd = &cobra.Command{
-		Use:   "img",
+		Use:   "image",
 		Short: "List all images",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("listing images..")
+			listImages(client)
 		},
 	}
 

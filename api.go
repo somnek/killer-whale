@@ -8,23 +8,23 @@ import (
 )
 
 func listContainers(c *docker.Client) {
-	imgs, err := c.ListImages(docker.ListImagesOptions{All: false})
+	containers, err := c.ListContainers(docker.ListContainersOptions{All: false})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, img := range imgs {
-		fmt.Println("ID", img.ID)
+	for _, container := range containers {
+		fmt.Println("Name", container.Names)
 	}
 }
 
 func listImages(c *docker.Client) {
-	imgs, err := c.ListImages(docker.ListImagesOptions{All: false})
+	images, err := c.ListImages(docker.ListImagesOptions{All: false})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, img := range imgs {
-		fmt.Println("ID", img.ID)
+	for _, image := range images {
+		fmt.Println("ID", image.ID)
 	}
 }
