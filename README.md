@@ -1,5 +1,5 @@
 <p align="centre">
-  <img src="https://github.com/somnek/killer-whale/blob/main/src/logo.png?raw=true"/>
+  <img style="width:300px" src="https://github.com/somnek/killer-whale/blob/main/src/logo.png?raw=true"/>
 </p>
 
 
