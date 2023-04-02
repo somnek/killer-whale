@@ -1,59 +1,77 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
 
-	docker "github.com/fsouza/go-dockerclient"
-	"github.com/spf13/cobra"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
+type model struct {
+	choices  []string
+	cursor   int
+	selected map[int]struct{}
+}
+
+func initialModel() model {
+	return model{
+		choices:  []string{"🍎 Apple", "🍐 Pear", "🍊 Orange", "🍌 Banana", "🍉 Watermelon", "🍇 Grape", "🍓 Strawberry", "🍈 Melon", "🍒 Cherry", "🍑 Peach"},
+		selected: make(map[int]struct{}),
+	}
+}
+
+func (m model) Init() tea.Cmd {
+	return nil
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		case "up", "k":
+			if m.cursor > 0 {
+				m.cursor--
+			}
+		case "down", "j":
+			if m.cursor < len(m.choices)-1 {
+				m.cursor++
+			}
+		case "enter", " ":
+			_, ok := m.selected[m.cursor]
+			if ok {
+				delete(m.selected, m.cursor)
+			} else {
+				m.selected[m.cursor] = struct{}{}
+			}
+		}
+	}
+	return m, nil
+}
+
+func (m model) View() string {
+	s := "What should we order for lunch?\n\n"
+	for i, choice := range m.choices {
+		cursor := " " // default cursor
+		if m.cursor == i {
+			cursor = "👉"
+		}
+		checked := " "
+		if _, ok := m.selected[i]; ok {
+			checked = "x"
+		}
+		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+	}
+	s += "\nPress q to quit\n"
+	return s
+}
+
 func main() {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
+	p := tea.NewProgram(initialModel())
+	if _, err := p.Run(); err != nil {
+		fmt.Println("Alas, it's all over. Error: ", err.Error())
+		os.Exit(1)
 	}
-
-	// cli
-	var rootCmd = &cobra.Command{
-		Use:   "whale",
-		Short: "A Docker cli",
-	}
-
-	var listCmd = &cobra.Command{
-		Use:   "container",
-		Short: "List all containers",
-		Run: func(cmd *cobra.Command, args []string) {
-			listContainers(client)
-		},
-	}
-
-	var xCmd = &cobra.Command{
-		Use:   "x",
-		Short: "...",
-		Run: func(cmd *cobra.Command, args []string) {
-			id := "d1f02035c4a1366b01f21d078be53a09d3899669152b541a8203aef297e7646c"
-			stopContainer(client, id)
-			removeContainer(client, id)
-		},
-	}
-
-	var stopCmd = &cobra.Command{
-		Use:   "stop",
-		Short: "...",
-		Run: func(cmd *cobra.Command, args []string) {
-			listContainers(client)
-
-		},
-	}
-
-	var imgCmd = &cobra.Command{
-		Use:   "image",
-		Short: "List all images",
-		Run: func(cmd *cobra.Command, args []string) {
-			listImages(client)
-		},
-	}
-
-	rootCmd.AddCommand(listCmd, stopCmd, imgCmd, xCmd)
-	rootCmd.Execute()
 }
