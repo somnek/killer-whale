@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	docker "github.com/fsouza/go-dockerclient"
 )
 
 type model struct {
@@ -14,8 +16,19 @@ type model struct {
 }
 
 func initialModel() model {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	choices := []string{}
+	for _, c := range listContainers(client) {
+		name := c.Names[0][1:]
+		choices = append(choices, name)
+	}
+
 	return model{
-		choices:  []string{"🍎 Apple", "🍐 Pear", "🍊 Orange", "🍌 Banana", "🍉 Watermelon", "🍇 Grape", "🍓 Strawberry", "🍈 Melon", "🍒 Cherry", "🍑 Peach"},
+		// choices:  []string{"🍎 Apple", "🍐 Pear", "🍊 Orange", "🍌 Banana", "🍉 Watermelon", "🍇 Grape", "🍓 Strawberry", "🍈 Melon", "🍒 Cherry", "🍑 Peach"},
+		choices:  choices,
 		selected: make(map[int]struct{}),
 	}
 }
@@ -58,7 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	s := "What should we order for lunch?\n\n"
 	for i, choice := range m.choices {
-		cursor := " " // default cursor
+		cursor := "  " // default cursor
 		if m.cursor == i {
 			cursor = "👉"
 		}

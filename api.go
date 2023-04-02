@@ -24,14 +24,12 @@ func removeContainer(c *docker.Client, id string) {
 	fmt.Println("Container removed")
 }
 
-func listContainers(c *docker.Client) {
+func listContainers(c *docker.Client) []docker.APIContainers {
 	containers, err := c.ListContainers(docker.ListContainersOptions{All: false})
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, container := range containers {
-		fmt.Println("Name", container.ID)
-	}
+	return containers
 }
 
 func listImages(c *docker.Client) {
