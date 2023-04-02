@@ -19,11 +19,30 @@ func main() {
 		Short: "A Docker cli",
 	}
 
-	var ctnCmd = &cobra.Command{
+	var listCmd = &cobra.Command{
 		Use:   "container",
 		Short: "List all containers",
 		Run: func(cmd *cobra.Command, args []string) {
 			listContainers(client)
+		},
+	}
+
+	var xCmd = &cobra.Command{
+		Use:   "x",
+		Short: "...",
+		Run: func(cmd *cobra.Command, args []string) {
+			id := "d1f02035c4a1366b01f21d078be53a09d3899669152b541a8203aef297e7646c"
+			stopContainer(client, id)
+			removeContainer(client, id)
+		},
+	}
+
+	var stopCmd = &cobra.Command{
+		Use:   "stop",
+		Short: "...",
+		Run: func(cmd *cobra.Command, args []string) {
+			listContainers(client)
+
 		},
 	}
 
@@ -35,6 +54,6 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(ctnCmd, imgCmd)
+	rootCmd.AddCommand(listCmd, stopCmd, imgCmd, xCmd)
 	rootCmd.Execute()
 }
