@@ -24,8 +24,8 @@ func removeContainer(c *docker.Client, id string) {
 	fmt.Println("Container removed")
 }
 
-func listContainers(c *docker.Client) []docker.APIContainers {
-	containers, err := c.ListContainers(docker.ListContainersOptions{All: false})
+func listContainers(c *docker.Client, showAll bool) []docker.APIContainers {
+	containers, err := c.ListContainers(docker.ListContainersOptions{All: showAll})
 	if err != nil {
 		log.Fatal(err)
 	}
