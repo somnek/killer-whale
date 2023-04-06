@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -75,7 +74,7 @@ var (
 			Blink(true)
 )
 
-func initialModel() model {
+func getChoices() []container {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatal(err)
@@ -87,43 +86,40 @@ func initialModel() model {
 		c := container{name: name, state: status, id: c.ID, ancestor: c.Image}
 		choices = append(choices, c)
 	}
+	return choices
+}
 
+func initialModel() model {
+	choices := getChoices()
 	return model{
 		choices:  choices,
 		selected: make(map[int]struct{}),
 	}
 }
 
-func checkServer() tea.Msg {
-	c := &http.Client{Timeout: 10 * time.Second}
-	res, err := c.Get("https://www.google.com")
-
-	if err != nil {
-		// There was an error making our request. Wrap the error we received
-		// in a message and return it.
-		return errMsg{err}
-	}
-	// We received a response from the server. Return the HTTP status code
-	// as a message. int is a valid message type.
-	return statusMsg(res.StatusCode)
+type TickMsg struct {
+	Time time.Time
 }
 
-type statusMsg int
+func doTick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return TickMsg{Time: t}
+	})
+}
 
-type errMsg struct{ err error }
-
-func (e errMsg) Error() string { return e.err.Error() }
+type tickMsg struct{}
 
 func (m model) Init() tea.Cmd {
-	return checkServer
+	return doTick()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
-	case statusMsg:
-		fmt.Println("Server is up! HTTP status code:", msg)
-		return m, nil
+	case TickMsg:
+		choices := getChoices()
+		m.choices = choices
+		return m, doTick()
 
 	case tea.KeyMsg:
 		switch msg.String() {
