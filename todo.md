@@ -21,4 +21,7 @@
     - created, restarting, running, removing, paused, exited, or dead
     * src: [link](https://docs.docker.com/engine/reference/commandline/ps/#filter)
 
-
+# REF
+> --------
+- [command tutorial](https://github.com/charmbracelet/bubbletea/tree/master/tutorials/commands/)
+- [p.Send](https://github.com/charmbracelet/bubbletea/issues/25#issuecomment-872331380)

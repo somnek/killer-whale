@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -69,7 +71,8 @@ var (
 			Align(lipgloss.Center).
 			Faint(true).
 			MarginLeft(5).
-			Border(border).Blink(true)
+			Border(border).
+			Blink(true)
 )
 
 func initialModel() model {
@@ -91,12 +94,36 @@ func initialModel() model {
 	}
 }
 
+func checkServer() tea.Msg {
+	c := &http.Client{Timeout: 10 * time.Second}
+	res, err := c.Get("https://www.google.com")
+
+	if err != nil {
+		// There was an error making our request. Wrap the error we received
+		// in a message and return it.
+		return errMsg{err}
+	}
+	// We received a response from the server. Return the HTTP status code
+	// as a message. int is a valid message type.
+	return statusMsg(res.StatusCode)
+}
+
+type statusMsg int
+
+type errMsg struct{ err error }
+
+func (e errMsg) Error() string { return e.err.Error() }
+
 func (m model) Init() tea.Cmd {
-	return nil
+	return checkServer
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case statusMsg:
+		fmt.Println("Server is up! HTTP status code:", msg)
+		return m, nil
 
 	case tea.KeyMsg:
 		switch msg.String() {
