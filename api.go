@@ -7,6 +7,18 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+func unPauseContainer(c *docker.Client, id string) {
+	if err := c.UnpauseContainer(id); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func pauseContainer(c *docker.Client, id string) {
+	if err := c.PauseContainer(id); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func stopContainer(c *docker.Client, id string) {
 	if err := c.StopContainer(id, 5); err != nil {
 		log.Fatal(err)

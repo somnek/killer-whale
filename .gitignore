@@ -1,9 +1,12 @@
 .env
 .vscode
-whale
 trash.md
+note.md
 
 # Binaries for programs and plugins
+whale
+killer
+
 *.exe
 *.exe~
 *.dll
