@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,6 +16,7 @@ type model struct {
 	choices  []container
 	cursor   int
 	selected map[int]struct{}
+	logs     string
 }
 
 type container struct {
@@ -31,6 +33,8 @@ const (
 	hotGreen     = lipgloss.Color("#73F59F")
 	lightBlue    = lipgloss.Color("#C1E0F7")
 	midBlue      = lipgloss.Color("#A4DEF9")
+	frenchBlue   = lipgloss.Color("#0072BB")
+	celesBlue    = lipgloss.Color("#1E91D6")
 	electricBlue = lipgloss.Color("#2DE1FC")
 	lightPurple  = lipgloss.Color("#CFBAE1")
 	midPurple    = lipgloss.Color("#C59FC9")
@@ -63,15 +67,26 @@ var (
 		"exited":     lipgloss.NewStyle().Background(midPink),
 		"dead":       lipgloss.NewStyle().Background(black),
 	}
+
+	wrapStyle = lipgloss.NewStyle().
+			Border(border).
+			Padding(1, 5, 1).
+			Align(lipgloss.Left)
+
 	titleStyle = lipgloss.NewStyle().
-			Background(electricBlue).
+			Background(celesBlue).
 			Foreground(black).
 			Bold(true).
 			Align(lipgloss.Center).
-			Faint(true).
-			MarginLeft(5).
-			Border(border).
 			Blink(true)
+
+	hintStyle = lipgloss.NewStyle().
+			Foreground(grey).
+			Align(lipgloss.Center)
+
+	logStyle = lipgloss.NewStyle().
+			Foreground(black).
+			Align(lipgloss.Left)
 )
 
 func getChoices() []container {
@@ -107,8 +122,6 @@ func doTick() tea.Cmd {
 	})
 }
 
-type tickMsg struct{}
-
 func (m model) Init() tea.Cmd {
 	return doTick()
 }
@@ -123,6 +136,68 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+
+		case "p":
+			m.logs = ""
+
+			client, err := docker.NewClientFromEnv()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if len(m.selected) == 0 {
+				m.logs = "No container selected\n"
+			}
+
+			for i, choice := range m.choices {
+				id := choice.id
+				state := choice.state
+				if _, ok := m.selected[i]; ok {
+					if state == "running" {
+						pauseContainer(client, id)
+						m.logs += "⏳ Paused " + choice.name + "\n"
+					} else {
+						m.logs += "❌ " + choice.name + "is not running\n"
+					}
+				}
+			}
+			m.selected = make(map[int]struct{})
+
+		case "u":
+			m.logs = ""
+
+			client, err := docker.NewClientFromEnv()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if len(m.selected) == 0 {
+				m.logs = "No container selected\n"
+			}
+
+			for i, choice := range m.choices {
+				id := choice.id
+				state := choice.state
+				if _, ok := m.selected[i]; ok {
+					if state == "paused" {
+						unPauseContainer(client, id)
+						m.logs += "⏳ Unpaused " + choice.name + "\n"
+					} else {
+						m.logs += "❌ " + choice.name + "is not running\n"
+					}
+				}
+			}
+			m.selected = make(map[int]struct{})
+
+		case "ctrl+a":
+			for i := range m.choices {
+				m.selected[i] = struct{}{}
+			}
+			return m, nil
+		case "esc":
+			m.logs = ""
+			m.selected = make(map[int]struct{})
+			return m, nil
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "up", "k":
@@ -144,15 +219,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.selected[m.cursor] = struct{}{}
 			}
+			m.logs = ""
 		}
 	}
 	return m, nil
 }
 
 func (m model) View() string {
+
 	var s string
-	title := titleStyle.Render("     Docker Containers     ")
-	s += fmt.Sprintf("%s\n\n", title)
+	title := "    🐳 Docker Containers    "
+	s += titleStyle.Render(title)
+	s += "\n\n"
+
 	for i, choice := range m.choices {
 		cursor := "  " // default cursor
 		if m.cursor == i {
@@ -166,8 +245,17 @@ func (m model) View() string {
 		name := choice.name
 		s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
 	}
-	s += "\nPress q to quit\n"
-	return s
+
+	hint := "\n'q' quit | 's' stop | 'r' restart\n"
+
+	s += hintStyle.MaxWidth(lipgloss.Width(title)).Render(hint)
+	s += "\n"
+	s += strings.Repeat("─", lipgloss.Width(title))
+	s += "\n"
+	s += logStyle.MaxWidth(lipgloss.Width(title)).Render(m.logs)
+
+	wrapAll := wrapStyle.Render(s)
+	return wrapAll
 }
 
 func main() {
