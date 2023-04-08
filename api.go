@@ -19,11 +19,25 @@ func pauseContainer(c *docker.Client, id string) {
 	}
 }
 
+func killContainer(c *docker.Client, id string) {
+	opts := docker.KillContainerOptions{
+		ID: id,
+	}
+	if err := c.KillContainer(opts); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func startContainer(c *docker.Client, id string) {
+	if err := c.StartContainer(id, nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func stopContainer(c *docker.Client, id string) {
 	if err := c.StopContainer(id, 5); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Container stopped")
 }
 
 func removeContainer(c *docker.Client, id string) {

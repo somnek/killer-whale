@@ -71,7 +71,8 @@ var (
 	wrapStyle = lipgloss.NewStyle().
 			Border(border).
 			Padding(1, 5, 1).
-			Align(lipgloss.Left)
+			Align(lipgloss.Left).
+			MarginLeft(5)
 
 	titleStyle = lipgloss.NewStyle().
 			Background(celesBlue).
@@ -137,7 +138,77 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 
-		case "p":
+		case "K": // kill
+			m.logs = ""
+			client, err := docker.NewClientFromEnv()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if len(m.selected) == 0 {
+				m.logs = "No container selected\n"
+			}
+
+			for k := range m.selected {
+				container := m.choices[k]
+				state := container.state
+				id := container.id
+				if state == "running" {
+					killContainer(client, id)
+					m.logs += "🔪 Killed " + container.name + "\n"
+				} else {
+					m.logs += "❌ " + container.name + " already stopped\n"
+				}
+			}
+
+		case "s": // stop
+			m.logs = ""
+
+			client, err := docker.NewClientFromEnv()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if len(m.selected) == 0 {
+				m.logs = "No container selected\n"
+			}
+
+			for k := range m.selected {
+				container := m.choices[k]
+				state := container.state
+				id := container.id
+				if state == "running" {
+					stopContainer(client, id)
+					m.logs += "🛑 Stopped " + container.name + "\n"
+				} else {
+					m.logs += "❌ " + container.name + " already stopped\n"
+				}
+			}
+
+		case "u": // up
+			m.logs = ""
+			client, err := docker.NewClientFromEnv()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if len(m.selected) == 0 {
+				m.logs = "No container selected\n"
+			}
+
+			for k := range m.selected {
+				container := m.choices[k]
+				state := container.state
+				id := container.id
+				if state == "exited" {
+					startContainer(client, id)
+					m.logs += "🚀 Started " + container.name + "\n"
+				} else {
+					m.logs += "❌ " + container.name + " already running\n"
+				}
+			}
+
+		case "p": // pause
 			m.logs = ""
 
 			client, err := docker.NewClientFromEnv()
@@ -161,9 +232,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
-			m.selected = make(map[int]struct{})
 
-		case "u":
+		case "P": // unpause
 			m.logs = ""
 
 			client, err := docker.NewClientFromEnv()
@@ -187,32 +257,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
-			m.selected = make(map[int]struct{})
 
-		case "ctrl+a":
+		case "ctrl+a", "A": // select all
 			for i := range m.choices {
 				m.selected[i] = struct{}{}
 			}
 			return m, nil
-		case "esc":
+
+		case "esc": // clear selection
 			m.logs = ""
 			m.selected = make(map[int]struct{})
 			return m, nil
-		case "ctrl+c", "q":
+
+		case "ctrl+c", "q": // quit
 			return m, tea.Quit
-		case "up", "k":
+
+		case "up", "k": // move cursor up
 			if m.cursor > 0 {
 				m.cursor--
 			} else {
 				m.cursor = len(m.choices) - 1
 			}
-		case "down", "j":
+
+		case "down", "j": // move cursor down
 			if m.cursor < len(m.choices)-1 {
 				m.cursor++
 			} else {
 				m.cursor = 0
 			}
-		case "enter", " ":
+
+		case "enter", " ": // toggle selection
 			_, ok := m.selected[m.cursor]
 			if ok {
 				delete(m.selected, m.cursor)
@@ -246,9 +320,9 @@ func (m model) View() string {
 		s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
 	}
 
-	hint := "\n'q' quit | 's' stop | 'r' restart\n"
+	hint := "\n'q' quit | '?' controls\n"
 
-	s += hintStyle.MaxWidth(lipgloss.Width(title)).Render(hint)
+	s += hintStyle.MaxWidth(lipgloss.Width(title) * 2).Render(hint)
 	s += "\n"
 	s += strings.Repeat("─", lipgloss.Width(title))
 	s += "\n"
