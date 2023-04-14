@@ -1,4 +1,4 @@
-<p align="centre">
+<p align="center">
   <img style="width:300px" src="https://github.com/somnek/killer-whale/blob/main/src/logo.png?raw=true"/>
 </p>
 
