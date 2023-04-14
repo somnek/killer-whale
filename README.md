@@ -18,7 +18,7 @@ go run .
 ```
 or build it:
 ```bash
-go build -o killer-whale
+cd killer-whale && go build -o killer-whale
 ```
 Once the build is complete, move the executable to a directory in your system's `PATH` environment variable so that you can run it from anywhere.
 
@@ -32,7 +32,7 @@ source ~/.zshrc
 ```
 bash:
 ```bash
-source ~/.bashrc
+exec bash
 ```
 
 4. Run the application:
