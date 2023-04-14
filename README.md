@@ -4,15 +4,19 @@
 
 
 # killer-whale 🐳
+
 Container manager TUI for terminal dwellers ☠️
 
-# Usage
+## Usage
+
 1. Clone the repository using Git: 
+
 ```bash
 git clone https://github.com/somnek/killer-whale.git
 ```
 
 2. Run the application using Go:
+
 ```bash
 go run .
 ```
@@ -36,6 +40,7 @@ exec bash
 ```
 
 4. Run the application:
+
 ```bash
 killer-whale
 ```
