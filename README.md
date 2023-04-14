@@ -58,4 +58,4 @@ killer-whale
 - [ ] Remove images
 - [ ] Hotkeys configuration
 
-So why settle for a boring GUI when you can have a killer command-line interface to manage your Docker containers? Killer Whale is designed to be fun and easy to use, with intuitive keyboard shortcuts and an attractive, streamlined interface that won't slow you down. With Killer Whale, you'll feel like a Docker pro in no time. Give it a try and see how killer your container management skills can be!
+So why settle for a boring GUI when you can have a killer 🤘 command-line interface to manage your Docker containers? Killer Whale is designed to be fun and easy to use, with intuitive keyboard shortcuts ⌨️ and an attractive, streamlined interface that won't slow you down. With Killer Whale, you'll feel like a Docker pro in no time 🚀. Give it a try and see how killer your container management skills can be! 😎
