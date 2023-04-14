@@ -137,7 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.logs = "No container selected\n"
 			}
 
-			// force for now  (TODO: opts)
+			// force for now  aka include running (TODO: opts)
 			for k := range m.selected {
 				container := m.choices[k]
 				id := container.id
@@ -236,7 +236,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				container := m.choices[k]
 				state := container.state
 				id := container.id
-				if state == "exited" {
+				if state == "exited" || state == "created" {
 					startContainer(client, id)
 					m.logs += "🚀 Started " + container.name + "\n"
 				} else {
