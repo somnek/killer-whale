@@ -17,6 +17,7 @@ type model struct {
 	cursor   int
 	selected map[int]struct{}
 	logs     string
+	page     int
 }
 
 type container struct {
@@ -333,6 +334,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected[m.cursor] = struct{}{}
 			}
 			m.logs = ""
+		case "?": // controls page
+			if m.page == 0 {
+				m.page = 1
+			} else {
+				m.page = 0
+			}
+			return m, nil
 		}
 	}
 	return m, nil
@@ -345,21 +353,36 @@ func (m model) View() string {
 	s += titleStyle.Render(title)
 	s += "\n\n"
 
-	for i, choice := range m.choices {
-		cursor := "  " // default cursor
-		if m.cursor == i {
-			cursor = "👉"
+	if m.page == 0 {
+		for i, choice := range m.choices {
+			cursor := "  " // default cursor
+			if m.cursor == i {
+				cursor = "👉"
+			}
+			checked := " "
+			if _, ok := m.selected[i]; ok {
+				checked = "x"
+			}
+			state := stateStyle[choice.state].Render(" ")
+			name := choice.name
+			s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
 		}
-		checked := " "
-		if _, ok := m.selected[i]; ok {
-			checked = "x"
-		}
-		state := stateStyle[choice.state].Render(" ")
-		name := choice.name
-		s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
+	} else if m.page == 1 {
+		controls := `
+x   - remove container
+r   - restart container
+K   - kill container
+s   - stop container
+u   - start container
+p   - pause container
+P   - unpause container
+esc - clear selection
+? - hide controls`
+		s += controls + "\n"
+
 	}
 
-	hint := "\n'q' quit | '?' controls\n"
+	hint := "\n'q' quit | '?' show controls\n"
 
 	s += hintStyle.Render(hint)
 	s += "\n"
