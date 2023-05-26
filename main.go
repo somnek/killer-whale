@@ -382,7 +382,7 @@ esc - clear selection
 
 	}
 
-	hint := "\n'q' quit | '?' show controls\n"
+	hint := "\n'q' quit | '?' toggle controls\n"
 
 	s += hintStyle.Render(hint)
 	s += "\n"
