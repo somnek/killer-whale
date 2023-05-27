@@ -51,7 +51,7 @@ const (
 var (
 	stateStyle = map[string]lipgloss.Style{
 		"created":    lipgloss.NewStyle().Background(midPurple),
-		"running":    lipgloss.NewStyle().Background(hotGreen),
+		"running":    lipgloss.NewStyle().Background(green),
 		"paused":     lipgloss.NewStyle().Background(yellow),
 		"restarting": lipgloss.NewStyle().Background(orange),
 		"exited":     lipgloss.NewStyle().Background(midPink),
@@ -65,7 +65,7 @@ var (
 			MarginLeft(5)
 
 	titleStyle = lipgloss.NewStyle().
-			Background(celesBlue).
+			Background(orange).
 			Foreground(black).Bold(true).
 			Align(lipgloss.Center).
 			Blink(true)
@@ -238,8 +238,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				state := container.state
 				id := container.id
 				if state == "exited" || state == "created" {
-					startContainer(client, id)
-					m.logs += "🚀 Started " + container.name + "\n"
+					go startContainer(client, id)
+					if err != nil {
+						m.logs += fmt.Sprintf("🚧  %s\n", err.Error())
+					} else {
+						m.logs += "🚀 Started " + container.name + "\n"
+					}
 				} else {
 					m.logs += "🚧  " + container.name + " already running\n"
 				}
@@ -369,14 +373,14 @@ func (m model) View() string {
 		}
 	} else if m.page == 1 {
 		controls := `
-x   - remove container
-r   - restart container
-K   - kill container
-s   - stop container
-u   - start container
-p   - pause container
-P   - unpause container
-esc - clear selection
+x   - remove
+r   - restart
+K   - kill
+s   - stop
+u   - start
+p   - pause
+P   - unpause
+esc - clear
 ? - hide controls`
 		s += controls + "\n"
 

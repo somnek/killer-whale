@@ -11,48 +11,34 @@ func removeContainer(c *docker.Client, id string) {
 		ID:    id,
 		Force: true,
 	}
-	if err := c.RemoveContainer(opts); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.RemoveContainer(opts)
 }
 
 func restartContainer(c *docker.Client, id string) {
-	if err := c.RestartContainer(id, 5); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.RestartContainer(id, 5)
 }
 
 func unPauseContainer(c *docker.Client, id string) {
-	if err := c.UnpauseContainer(id); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.UnpauseContainer(id)
 }
 
 func pauseContainer(c *docker.Client, id string) {
-	if err := c.PauseContainer(id); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.PauseContainer(id)
 }
 
 func killContainer(c *docker.Client, id string) {
 	opts := docker.KillContainerOptions{
 		ID: id,
 	}
-	if err := c.KillContainer(opts); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.KillContainer(opts)
 }
 
 func startContainer(c *docker.Client, id string) {
-	if err := c.StartContainer(id, nil); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.StartContainer(id, nil)
 }
 
 func stopContainer(c *docker.Client, id string) {
-	if err := c.StopContainer(id, 5); err != nil {
-		log.Fatal(err)
-	}
+	_ = c.StopContainer(id, 5)
 }
 
 func listContainers(c *docker.Client, showAll bool) []docker.APIContainers {
