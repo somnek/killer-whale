@@ -48,3 +48,14 @@ func listContainers(c *docker.Client, showAll bool) []docker.APIContainers {
 	}
 	return containers
 }
+
+func listImages(c *docker.Client, showAll bool) []docker.APIImages {
+	opts := docker.ListImagesOptions{
+		All: showAll,
+	}
+	images, err := c.ListImages(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return images
+}
