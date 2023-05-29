@@ -13,11 +13,12 @@ import (
 )
 
 type model struct {
-	choices  []container
-	cursor   int
-	selected map[int]struct{}
-	logs     string
-	page     int
+	containers []container
+	images     []image
+	cursor     int
+	selected   map[int]struct{}
+	logs       string
+	page       int
 }
 
 type container struct {
@@ -25,6 +26,11 @@ type container struct {
 	state    string
 	id       string
 	ancestor string
+}
+
+type image struct {
+	name string
+	id   string
 }
 
 /* STYLING */
@@ -79,26 +85,61 @@ var (
 			Align(lipgloss.Left)
 )
 
-func getChoices() []container {
+func getContainers() []container {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatal(err)
 	}
-	choices := []container{}
+	containers := []container{}
 	for _, c := range listContainers(client, true) {
 		name := c.Names[0][1:]
 		status := c.State
 		c := container{name: name, state: status, id: c.ID, ancestor: c.Image}
-		choices = append(choices, c)
+		containers = append(containers, c)
 	}
-	return choices
+	return containers
+}
+
+func getImages() []image {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	images := []image{}
+	for _, c := range listImages(client, true) {
+		tags := c.RepoTags
+		var name string
+		var size int64
+		if len(tags) > 0 {
+			name = tags[0]
+			size = c.Size
+			// format size (GB, MB, KB)
+			if size > 1000000000 {
+				size = size / 1000000000
+				name = fmt.Sprintf("%s (%dGB)", name, size)
+			} else if size > 1000000 {
+				size = size / 1000000
+				name = fmt.Sprintf("%s (%dMB)", name, size)
+			} else if size > 1000 {
+				size = size / 1000
+				name = fmt.Sprintf("%s (%dKB)", name, size)
+			} else {
+				name = fmt.Sprintf("%s (%dB)", name, size)
+			}
+			c := image{name: name, id: c.ID}
+			images = append(images, c)
+		}
+	}
+	return images
 }
 
 func initialModel() model {
-	choices := getChoices()
+	containers := getContainers()
+	images := getImages()
 	return model{
-		choices:  choices,
-		selected: make(map[int]struct{}),
+		containers: containers,
+		images:     images,
+		selected:   make(map[int]struct{}),
 	}
 }
 
@@ -120,8 +161,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case TickMsg:
-		choices := getChoices()
-		m.choices = choices
+		// containers
+		containers := getContainers()
+		m.containers = containers
+		// images
+		images := getImages()
+		m.images = images
 		return m, doTick()
 
 	case tea.KeyMsg:
@@ -140,7 +185,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// force for now  aka include running (TODO: opts)
 			for k := range m.selected {
-				container := m.choices[k]
+				container := m.containers[k]
 				id := container.id
 				go removeContainer(client, id)
 				m.logs += "🗑️  Remove " + container.name + "\n"
@@ -161,7 +206,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			for k := range m.selected {
-				container := m.choices[k]
+				container := m.containers[k]
 				state := container.state
 				id := container.id
 				if state == "running" {
@@ -185,7 +230,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			for k := range m.selected {
-				container := m.choices[k]
+				container := m.containers[k]
 				state := container.state
 				id := container.id
 				if state == "running" {
@@ -210,7 +255,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			for k := range m.selected {
-				container := m.choices[k]
+				container := m.containers[k]
 				state := container.state
 				id := container.id
 				if state == "running" {
@@ -234,7 +279,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			for k := range m.selected {
-				container := m.choices[k]
+				container := m.containers[k]
 				state := container.state
 				id := container.id
 				if state == "exited" || state == "created" {
@@ -262,7 +307,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.logs = "No container selected\n"
 			}
 
-			for i, choice := range m.choices {
+			for i, choice := range m.containers {
 				id := choice.id
 				state := choice.state
 				if _, ok := m.selected[i]; ok {
@@ -288,7 +333,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.logs = "No container selected\n"
 			}
 
-			for i, choice := range m.choices {
+			for i, choice := range m.containers {
 				id := choice.id
 				state := choice.state
 				if _, ok := m.selected[i]; ok {
@@ -303,7 +348,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "ctrl+a", "A": // select all
-			for i := range m.choices {
+			for i := range m.containers {
 				m.selected[i] = struct{}{}
 			}
 			return m, nil
@@ -320,11 +365,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor > 0 {
 				m.cursor--
 			} else {
-				m.cursor = len(m.choices) - 1
+				m.cursor = len(m.containers) - 1
 			}
 
 		case "down", "j": // move cursor down
-			if m.cursor < len(m.choices)-1 {
+			if m.cursor < len(m.containers)-1 {
 				m.cursor++
 			} else {
 				m.cursor = 0
@@ -340,12 +385,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logs = ""
 		case "?": // controls page
 			if m.page == 0 {
-				m.page = 1
+				m.page = 2
 			} else {
 				m.page = 0
 			}
 			return m, nil
+		case "tab":
+			// should not include controls page
+			if m.page == 0 {
+				m.page = 1
+			} else {
+				m.page = 0
+			}
 		}
+
 	}
 	return m, nil
 }
@@ -358,7 +411,7 @@ func (m model) View() string {
 	s += "\n\n"
 
 	if m.page == 0 {
-		for i, choice := range m.choices {
+		for i, choice := range m.containers {
 			cursor := "  " // default cursor
 			if m.cursor == i {
 				cursor = "👉"
@@ -372,6 +425,19 @@ func (m model) View() string {
 			s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
 		}
 	} else if m.page == 1 {
+		for i, choice := range m.images {
+			cursor := "  " // default cursor
+			if m.cursor == i {
+				cursor = "👉"
+			}
+			checked := " "
+			if _, ok := m.selected[i]; ok {
+				checked = "x"
+			}
+			name := choice.name
+			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, name)
+		}
+	} else if m.page == 2 {
 		controls := `
 x   - remove
 r   - restart
@@ -385,7 +451,6 @@ esc - clear
 		s += controls + "\n"
 
 	}
-
 	hint := "\n'q' quit | '?' toggle controls\n"
 
 	s += hintStyle.Render(hint)
