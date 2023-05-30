@@ -391,7 +391,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.logs = ""
 		case "?": // controls page
-			if m.page == 0 {
+			if m.page != 2 {
 				m.page = 2
 			} else {
 				m.page = 0
