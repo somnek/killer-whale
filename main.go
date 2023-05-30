@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	docker "github.com/fsouza/go-dockerclient"
@@ -19,6 +20,7 @@ type model struct {
 	selected   map[int]struct{}
 	logs       string
 	page       int
+	viewport   viewport.Model
 }
 
 type container struct {
@@ -67,8 +69,7 @@ var (
 	wrapStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Padding(1, 5, 1).
-			Align(lipgloss.Left).
-			MarginLeft(5)
+			Align(lipgloss.Center)
 
 	titleStyle = lipgloss.NewStyle().
 			Background(orange).
@@ -168,6 +169,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		images := getImages()
 		m.images = images
 		return m, doTick()
+
+	case tea.WindowSizeMsg:
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height
+		m.logs += fmt.Sprintf("resize: %dx%d\n", msg.Width, msg.Height)
+		return m, nil
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -459,6 +466,8 @@ esc - clear
 	s += "\n"
 	s += logStyle.Render(m.logs)
 
+	wrapStyle = wrapStyle.Foreground(lipgloss.Color(celesBlue))
+	wrapStyle = wrapStyle.MarginLeft(m.viewport.Width/2 - lipgloss.Width(title))
 	wrapAll := wrapStyle.Render(s)
 	return wrapAll
 }
@@ -467,6 +476,7 @@ func main() {
 	p := tea.NewProgram(
 		initialModel(),
 		tea.WithAltScreen(),
+		tea.WithMouseCellMotion(),
 	)
 	if _, err := p.Run(); err != nil {
 		fmt.Println("Alas, it's all over. Error: ", err.Error())
