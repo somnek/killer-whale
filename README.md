@@ -54,7 +54,7 @@ killer-whale
 - [x] Remove containers
 
 # WIP 🛠️
-- [ ] List all images
+- [x] List all images
 - [ ] Remove images
 - [ ] Hotkeys configuration
 
