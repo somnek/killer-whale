@@ -69,7 +69,7 @@ var (
 	wrapStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Padding(1, 5, 1).
-			Align(lipgloss.Center)
+			Align(lipgloss.Left)
 
 	titleStyle = lipgloss.NewStyle().
 			Background(orange).
