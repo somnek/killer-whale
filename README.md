@@ -5,7 +5,7 @@
 
 # killer-whale 🐳
 
-Killer Whale is a container manager TUI for terminal dwellers. It provides an intuitive, easy-to-use interface for managing your Docker containers without leaving the comfort of your command line.
+Killer Whale is a Docker TUI for terminal dwellers. It provides an intuitive, easy-to-use interface for managing your Docker containers without leaving the comfort of your command line.
 
 
 
