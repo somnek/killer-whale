@@ -355,8 +355,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "ctrl+a", "A": // select all
-			for i := range m.containers {
-				m.selected[i] = struct{}{}
+			if len(m.containers) == len(m.selected) {
+				m.selected = make(map[int]struct{})
+			} else {
+				for i := range m.containers {
+					m.selected[i] = struct{}{}
+				}
 			}
 			return m, nil
 
@@ -390,6 +394,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected[m.cursor] = struct{}{}
 			}
 			m.logs = ""
+
 		case "?": // controls page
 			if m.page != 2 {
 				m.page = 2
@@ -446,15 +451,16 @@ func (m model) View() string {
 		}
 	} else if m.page == 2 {
 		controls := `
-x   - remove
-r   - restart
-K   - kill
-s   - stop
-u   - start
-p   - pause
-P   - unpause
+ x  - remove
+ r  - restart
+ K  - kill
+ s  - stop
+ u  - start
+ p  - pause
+ P  - unpause
 esc - clear
-? - hide controls`
+C-a - select all
+ ?  - hide controls`
 		s += controls + "\n"
 
 	}
