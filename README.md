@@ -52,9 +52,9 @@ killer-whale
 - [x] Start/Stop containers
 - [x] Restart containers
 - [x] Remove containers
+- [x] List all images
 
 # WIP 🛠️
-- [x] List all images
 - [ ] Remove images
 - [ ] Hotkeys configuration
 
