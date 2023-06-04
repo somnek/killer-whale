@@ -107,7 +107,7 @@ func getImages() []image {
 		log.Fatal(err)
 	}
 	images := []image{}
-	for _, c := range listImages(client, true)[:10] {
+	for _, c := range listImages(client, true) {
 		tags := c.RepoTags
 		var name string
 		var size int64
@@ -418,11 +418,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 
 	var s string
-	title := "        🐳 Docker Containers        " // 30 characters
-	s += titleStyle.Render(title)
-	s += "\n\n"
+	var title string
 
 	if m.page == 0 {
+		// container page
+		title = "        🐳 Docker Containers        " // 30 characters
+		s += titleStyle.Render(title)
+		s += "\n\n"
+
 		for i, choice := range m.containers {
 			cursor := "  " // default cursor
 			if m.cursor == i {
@@ -442,7 +445,20 @@ func (m model) View() string {
 			s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
 		}
 	} else if m.page == 1 {
-		for i, choice := range m.images {
+		// image page
+		title = "          🐳 Docker Images          " // 30 characters
+		s += titleStyle.Render(title)
+		s += "\n\n"
+
+		// truncate
+		shouldTruncate := false
+		imageList := m.images
+		if len(m.images) > 10 {
+			shouldTruncate = true
+			imageList = m.images[:10]
+		}
+
+		for i, choice := range imageList {
 			cursor := "  " // default cursor
 			if m.cursor == i {
 				cursor = "👉"
@@ -459,7 +475,17 @@ func (m model) View() string {
 			}
 			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, name)
 		}
+		// add more images message
+		if shouldTruncate {
+			s += fmt.Sprintf("\n     %d more images... ↓\n", len(m.images)-10)
+		}
+
 	} else if m.page == 2 {
+		// controls page
+		title = "            🔧 Controls             "
+		s += titleStyle.Render(title)
+		s += "\n"
+
 		controls := `
  x  - remove
  r  - restart
@@ -474,6 +500,7 @@ C-a - select all
 		s += controls + "\n"
 
 	}
+
 	hint := "\n'q' quit | '?' toggle controls\n"
 
 	s += hintStyle.Render(hint)
@@ -482,7 +509,7 @@ C-a - select all
 	s += "\n"
 	s += logStyle.Render(m.logs)
 
-	wrapStyle = wrapStyle.Foreground(lipgloss.Color(celesBlue))
+	// wrapStyle = wrapStyle.Foreground(lipgloss.Color(celesBlue))
 	wrapStyle = wrapStyle.MarginLeft(m.viewport.Width/2 - lipgloss.Width(title))
 	wrapAll := wrapStyle.Render(s)
 	return wrapAll
