@@ -107,7 +107,7 @@ func getImages() []image {
 		log.Fatal(err)
 	}
 	images := []image{}
-	for _, c := range listImages(client, true) {
+	for _, c := range listImages(client, true)[:10] {
 		tags := c.RepoTags
 		var name string
 		var size int64
@@ -173,7 +173,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height
-		m.logs += fmt.Sprintf("resize: %dx%d\n", msg.Width, msg.Height)
+		// m.logs += fmt.Sprintf("resize: %dx%d\n", msg.Width, msg.Height)
 		return m, nil
 
 	case tea.KeyMsg:
@@ -418,7 +418,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 
 	var s string
-	title := "    🐳 Docker Containers    "
+	title := "        🐳 Docker Containers        " // 30 characters
 	s += titleStyle.Render(title)
 	s += "\n\n"
 
@@ -434,6 +434,11 @@ func (m model) View() string {
 			}
 			state := stateStyle[choice.state].Render(" ")
 			name := choice.name
+			// limit to 25 characters for now
+			// TODO: make this dynamic
+			if len(name) > 25 {
+				name = name[:25] + "..."
+			}
 			s += fmt.Sprintf("%s [%s] %s %s\n", cursor, checked, state, name)
 		}
 	} else if m.page == 1 {
@@ -446,7 +451,12 @@ func (m model) View() string {
 			if _, ok := m.selected[i]; ok {
 				checked = "x"
 			}
+			// limit to 25 characters for now
+			// TODO: make this dynamic
 			name := choice.name
+			if len(name) > 25 {
+				name = name[:25] + "..."
+			}
 			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, name)
 		}
 	} else if m.page == 2 {
