@@ -507,6 +507,7 @@ func (m model) View() string {
  P  - unpause
 esc - clear
 C-a - select all
+ f  - toggle fullscreen
  ?  - hide controls`
 		s += controls + "\n"
 
