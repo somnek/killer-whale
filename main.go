@@ -21,6 +21,7 @@ type model struct {
 	logs       string
 	page       int
 	viewport   viewport.Model
+	altscreen  bool
 }
 
 type container struct {
@@ -79,7 +80,7 @@ var (
 
 	hintStyle = lipgloss.NewStyle().
 			Foreground(grey).
-			Align(lipgloss.Center)
+			Align(lipgloss.Left)
 
 	logStyle = lipgloss.NewStyle().
 			Foreground(black).
@@ -178,6 +179,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+
+		case "f": // toggle fullscreen
+			var cmd tea.Cmd
+			if m.altscreen {
+				cmd = tea.ExitAltScreen
+			} else {
+				cmd = tea.EnterAltScreen
+			}
+			m.altscreen = !m.altscreen
+			return m, cmd
 
 		case "x": // remove
 			m.logs = ""
@@ -501,7 +512,7 @@ C-a - select all
 
 	}
 
-	hint := "\n'q' quit | '?' toggle controls\n"
+	hint := "\n'q' quit | '?' controls | ' ' select"
 
 	s += hintStyle.Render(hint)
 	s += "\n"
@@ -518,7 +529,7 @@ C-a - select all
 func main() {
 	p := tea.NewProgram(
 		initialModel(),
-		tea.WithAltScreen(),
+		// tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
 	if _, err := p.Run(); err != nil {
