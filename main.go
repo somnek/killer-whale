@@ -513,7 +513,7 @@ C-a - select all
 
 	}
 
-	hint := "\n'q' quit | '?' controls | ' ' select"
+	hint := "\n'q' quit | '?' controls | ' ' select\n'h/j/k/l' move | 'tab' switch page"
 
 	s += hintStyle.Render(hint)
 	s += "\n"
