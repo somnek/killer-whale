@@ -55,6 +55,7 @@ killer-whale
 - [x] List all images
 
 # WIP 🛠️
+- [ ] docker logs -> full screen
 - [ ] Remove images
 - [ ] Hotkeys configuration
 
