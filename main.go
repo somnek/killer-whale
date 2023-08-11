@@ -199,6 +199,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			// force for now  aka include running (TODO: opts)
@@ -221,6 +222,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			for k := range m.selected {
@@ -245,6 +247,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			for k := range m.selected {
@@ -270,6 +273,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			for k := range m.selected {
@@ -294,6 +298,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			for k := range m.selected {
@@ -323,6 +328,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			for i, choice := range m.containers {
@@ -349,6 +355,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if len(m.selected) == 0 {
 				m.logs = "No container selected\n"
+				return m, nil
 			}
 
 			for i, choice := range m.containers {
