@@ -282,11 +282,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				container := m.containers[k]
 				state := container.state
 				id := container.id
-				if state == "running" {
+				if state == "running" || state == "restarting" {
 					go stopContainer(client, id)
 					m.logs += "🛑 Stop " + container.name + "\n"
 				} else {
-					m.logs += "🚧  " + container.name + " already stopped\n"
+					m.logs += "🚧  " + " unable to stop " + container.name + "\n"
 				}
 			}
 			return m, nil
