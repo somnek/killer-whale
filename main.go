@@ -55,6 +55,8 @@ const (
 	black        = lipgloss.Color("#3C3C3C")
 	lightPink    = lipgloss.Color("#F9CFF2")
 	midPink      = lipgloss.Color("#F786AA")
+
+	lastPage = 4
 )
 
 var (
@@ -414,16 +416,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logs = ""
 
 		case "?": // controls page
-			if m.page != 2 {
-				m.page = 2
+			if m.page != 3 {
+				m.page = 3
 			} else {
 				m.page = 0
 			}
 			return m, nil
 		case "tab":
 			// should not include controls page
-			if m.page == 0 {
-				m.page = 1
+			if m.page < lastPage-1 {
+				m.page++
 			} else {
 				m.page = 0
 			}
@@ -499,6 +501,13 @@ func (m model) View() string {
 		}
 
 	} else if m.page == 2 {
+		// utilities like docker volume prune, docker system prune, etc
+		title = "         🐳 Docker Utilities        "
+		s += titleStyle.Render(title)
+		s += "\n\n"
+		s += " 1. docker system prune\n"
+		s += " 2. docker volume prune\n"
+	} else if m.page == 3 {
 		// controls page
 		title = "            🔧 Controls             "
 		s += titleStyle.Render(title)
