@@ -45,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				container := m.containers[k]
 				id := container.id
 				go removeContainer(client, id)
-				m.logs += "🗑️  Remove " + container.name + "\n"
+				m.logs = "🗑️  Remove " + container.name + "\n"
 			}
 			m.selected = make(map[int]struct{})
 			m.cursor = 0
@@ -69,9 +69,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id := container.id
 				if state == "running" {
 					go restartContainer(client, id)
-					m.logs += "🔃 Restarted " + container.name + "\n"
+					m.logs = "🔃 Restarted " + container.name + "\n"
 				} else {
-					m.logs += "🚧  " + container.name + " not running\n"
+					m.logs = "🚧  " + container.name + " not running\n"
 				}
 			}
 			m.selected = make(map[int]struct{})
@@ -95,9 +95,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id := container.id
 				if state == "running" {
 					killContainer(client, id)
-					m.logs += "🔪 Killed " + container.name + "\n"
+					m.logs = "🔪 Killed " + container.name + "\n"
 				} else {
-					m.logs += "🚧 " + container.name + " already stopped\n"
+					m.logs = "🚧 " + container.name + " already stopped\n"
 				}
 			}
 			m.selected = make(map[int]struct{})
@@ -122,9 +122,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id := container.id
 				if state == "running" || state == "restarting" {
 					go stopContainer(client, id)
-					m.logs += "🛑 Stop " + container.name + "\n"
+					m.logs = "🛑 Stop " + container.name + "\n"
 				} else {
-					m.logs += "🚧  " + " unable to stop " + container.name + "\n"
+					m.logs = "🚧  " + " unable to stop " + container.name + "\n"
 				}
 			}
 			m.selected = make(map[int]struct{})
@@ -149,12 +149,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if state == "exited" || state == "created" {
 					go startContainer(client, id)
 					if err != nil {
-						m.logs += fmt.Sprintf("🚧  %s\n", err.Error())
+						m.logs = fmt.Sprintf("🚧  %s\n", err.Error())
 					} else {
-						m.logs += "🚀 Started " + container.name + "\n"
+						m.logs = "🚀 Started " + container.name + "\n"
 					}
 				} else {
-					m.logs += "🚧  " + container.name + " already running\n"
+					m.logs = "🚧  " + container.name + " already running\n"
 				}
 			}
 			m.selected = make(map[int]struct{})
@@ -179,9 +179,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if _, ok := m.selected[i]; ok {
 					if state == "running" {
 						pauseContainer(client, id)
-						m.logs += "⏳ Paused " + choice.name + "\n"
+						m.logs = "⏳ Paused " + choice.name + "\n"
 					} else {
-						m.logs += "🚧  " + choice.name + " is not running\n"
+						m.logs = "🚧  " + choice.name + " is not running\n"
 					}
 				}
 			}
@@ -207,9 +207,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if _, ok := m.selected[i]; ok {
 					if state == "paused" {
 						unPauseContainer(client, id)
-						m.logs += "✅ Unpaused " + choice.name + "\n"
+						m.logs = "✅ Unpaused " + choice.name + "\n"
 					} else {
-						m.logs += "🚧  " + choice.name + " is not running\n"
+						m.logs = "🚧  " + choice.name + " is not running\n"
 					}
 				}
 			}

@@ -28,7 +28,7 @@ const (
 	lastPage         = 4
 	minHeightPerView = 8  // 6 item
 	maxHeightPerView = 12 // 10 item
-	fixedWidth       = 80
+	fixedWidth       = 92
 	fixedBodyLWidth  = 36 // exclude padding
 	fixedBodyRWidth  = 44 // exclude padding
 )
@@ -45,15 +45,17 @@ var (
 
 	bodyLStyle = lipgloss.NewStyle().
 			Padding(1, 0, 0, 4).
-			Border(lipgloss.RoundedBorder(), true, false, false, true).
 			BorderForeground(black)
+
 	bodyRStyle = lipgloss.NewStyle().
 			Padding(1, 4, 0, 0).
 			PaddingLeft(4).
-			Border(lipgloss.RoundedBorder(), true, true, false, false).
 			Foreground(black).
 			BorderForeground(black)
 
+	appStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Foreground(black)
 	bodyStyle = lipgloss.NewStyle().
 			Align(lipgloss.Left)
 
@@ -65,12 +67,12 @@ var (
 			Align(lipgloss.Left)
 
 	logStyle = lipgloss.NewStyle().
-			Foreground(black).
-			Align(lipgloss.Left)
+			Foreground(black)
 
 	selectedNameStyle = lipgloss.NewStyle().
 				Foreground(black).
 				Background(grey)
+
 	styleCheck = lipgloss.NewStyle().
 			Foreground(hotGreen)
 )

@@ -80,8 +80,6 @@ func buildImageView(m model) string {
 		if _, ok := m.selected[i]; ok {
 			checked = "x"
 		}
-		// limit to 25 characters for now
-		// TODO: make this dynamic
 		name := choice.name
 		if len(name) > 25 {
 			name = name[:25] + "..."
@@ -98,7 +96,7 @@ func buildImageView(m model) string {
 func buildLogView(m model) string {
 	var s string
 	s += m.logs
-	padBodyHeight(&s, lipgloss.Height(m.logs)+1)
+	logStyle.MarginLeft((fixedWidth - len(s)) / 2)
 	return logStyle.Render(s)
 }
 
@@ -112,6 +110,7 @@ func buildContainerView(m model) (string, string) {
 
 			bodyR = buildContainerDescShort(choice)
 		}
+
 		state := stateStyle[choice.state].Render("●")
 		name := choice.name
 		name = runewidth.Truncate(name, 25, "...")
@@ -129,7 +128,7 @@ func buildContainerView(m model) (string, string) {
 func (m model) View() string {
 
 	var final string
-	var bodyL, bodyR, body string
+	var bodyL, bodyR, body, bottom string
 
 	// body L
 	switch m.page {
@@ -140,18 +139,22 @@ func (m model) View() string {
 	}
 
 	//  title
-	title := strings.Repeat(" ", 36) + "🐳 Docker"
-	titleStyle.MarginLeft((m.width - (fixedWidth + lipgloss.Width(title)/2)) / 2)
-	title = titleStyle.Render(title)
+	// title := strings.Repeat(" ", 36) + "🐳 Docker"
+	// titleStyle.MarginLeft((m.width - (fixedWidth + lipgloss.Width(title)/2)) / 2)
+	// title = titleStyle.Render(title)
 
 	// join left + right component
 	body = lipgloss.JoinHorizontal(lipgloss.Left, bodyL, bodyR)
-	bodyStyle = bodyStyle.MarginLeft((m.width - fixedWidth) / 2)
 	body = bodyStyle.Render(body)
 
-	// joing title + body + help
-	final += lipgloss.JoinVertical(lipgloss.Top, title, body)
-	return final + "\n"
+	// bottom
+	bottom = buildLogView(m)
+
+	// joing title + body + log + help
+	final += lipgloss.JoinVertical(lipgloss.Top, body, bottom)
+	appStyle.MarginLeft((m.width - fixedWidth) / 2)
+
+	return appStyle.Render(final) + "\n"
 }
 
 func padBodyHeight(s *string, itemCount int) {
@@ -159,6 +162,3 @@ func padBodyHeight(s *string, itemCount int) {
 		*s += strings.Repeat("\n", minHeightPerView-itemCount)
 	}
 }
-
-// body R
-// bodyR = bodyRStyle.Render(buildLogView(m))
