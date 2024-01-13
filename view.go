@@ -10,7 +10,7 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-func buildContainerDescShort(c container) string {
+func buildContainerDescShort(c Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatal(err)
@@ -29,7 +29,7 @@ func buildContainerDescShort(c container) string {
 	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
 	return desc
 }
-func buildContainerDescFull(c container) string {
+func buildContainerDescFull(c Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatal(err)
