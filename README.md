@@ -6,6 +6,7 @@
 # killer-whale 🐳
 
 Killer Whale is a Docker TUI for terminal dwellers. It provides an intuitive, easy-to-use interface for managing your Docker containers without leaving the comfort of your command line.
+- more feature coming soon, thought its temping to add more feature, killer-whale meant to be as minimalistic as possible, if you are looking for docker tui with more features, check out [lazydocker](https://github.com/jesseduffield/lazydocker) by jesseduffield.
 
 
 
@@ -41,22 +42,3 @@ bash:
 exec bash
 ```
 
-4. Run the application:
-
-```bash
-killer-whale
-```
-
-# Features
-- [x] List all containers
-- [x] Start/Stop containers
-- [x] Restart containers
-- [x] Remove containers
-- [x] List all images
-
-# WIP 🛠️
-- [ ] docker logs -> full screen
-- [ ] Remove images
-- [ ] Hotkeys configuration
-
-So why settle for a boring GUI when you can have a killer 🤘 command-line interface to manage your Docker containers? Killer Whale is designed to be fun and easy to use, with intuitive keyboard shortcuts ⌨️ and an attractive, streamlined interface that won't slow you down. With Killer Whale, you'll feel like a Docker pro in no time 🚀. Give it a try and see how killer your container management skills can be! 😎
