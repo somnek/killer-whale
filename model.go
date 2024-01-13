@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type container struct {
+type Container struct {
 	name     string
 	state    string
 	id       string
@@ -14,7 +14,7 @@ type container struct {
 	desc     string
 }
 
-type image struct {
+type Image struct {
 	name string
 	id   string
 }
@@ -26,8 +26,8 @@ const (
 )
 
 type model struct {
-	containers []container
-	images     []image
+	containers []Container
+	images     []Image
 	cursor     int
 	selected   map[int]struct{}
 	logs       string

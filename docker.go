@@ -18,7 +18,7 @@ func restartContainer(c *docker.Client, id string) {
 	_ = c.RestartContainer(id, 5)
 }
 
-func unPauseContainer(c *docker.Client, id string) {
+func unpauseContainer(c *docker.Client, id string) {
 	_ = c.UnpauseContainer(id)
 }
 
