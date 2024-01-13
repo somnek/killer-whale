@@ -11,6 +11,7 @@ type container struct {
 	state    string
 	id       string
 	ancestor string
+	desc     string
 }
 
 type image struct {
@@ -50,14 +51,14 @@ func (m model) Init() tea.Cmd {
 }
 
 func initialModel() model {
+	cursor := 0
 	containers := getContainers()
 	images := getImages()
-	log := "placeholder"
+	containers[cursor].desc = buildContainerDescShort(containers[cursor])
 	return model{
 		containers: containers,
 		images:     images,
 		selected:   make(map[int]struct{}),
 		page:       pageContainer,
-		logs:       log,
 	}
 }

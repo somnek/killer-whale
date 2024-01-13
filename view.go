@@ -2,11 +2,63 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/mattn/go-runewidth"
 )
+
+func buildContainerDescShort(c container) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
+		ID: c.id,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, 20, "..."))
+	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
+	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
+	desc += fmt.Sprintf("State : %s\n", container.State.String())
+	desc += fmt.Sprintf("Ports : %v\n", container.NetworkSettings.Ports)
+	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
+	return desc
+}
+func buildContainerDescFull(c container) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
+		ID: c.id,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	desc := fmt.Sprintf("ID: %s\n", container.ID)
+	desc += fmt.Sprintf("Image: %s\n", container.Config.Image)
+	desc += fmt.Sprintf("Cmd: %s\n", strings.Join(container.Config.Cmd, " "))
+	desc += fmt.Sprintf("Created: %s\n", container.Created)
+	desc += fmt.Sprintf("State: %s\n", container.State.String())
+	desc += fmt.Sprintf("Ports: %v\n", container.NetworkSettings.Ports)
+	desc += fmt.Sprintf("Mounts: %v\n", container.Mounts)
+	desc += fmt.Sprintf("Labels: %v\n", container.Config.Labels)
+	desc += fmt.Sprintf("Env: %v\n", container.Config.Env)
+	desc += fmt.Sprintf("HostConfig: %v\n", container.HostConfig)
+	desc += fmt.Sprintf("NetworkSettings: %v\n", container.NetworkSettings)
+	desc += fmt.Sprintf("LogPath: %s\n", container.LogPath)
+	desc += fmt.Sprintf("RestartCount: %d\n", container.RestartCount)
+	desc += fmt.Sprintf("Driver: %s\n", container.Driver)
+	desc += fmt.Sprintf("Platform: %s\n", container.Platform)
+	desc += fmt.Sprintf("ProcessLabel: %s\n", container.ProcessLabel)
+	desc += fmt.Sprintf("IP: %s\n", container.NetworkSettings.IPAddress)
+	return desc
+}
 
 func buildImageView(m model) string {
 
@@ -50,13 +102,15 @@ func buildLogView(m model) string {
 	return logStyle.Render(s)
 }
 
-func buildContainerView(m model) string {
-	var s string
+func buildContainerView(m model) (string, string) {
+	var bodyL, bodyR string
 	for i, choice := range m.containers {
 		cursor := " " // default cursor
 		check := " "
 		if m.cursor == i {
 			cursor = "❯"
+
+			bodyR = buildContainerDescShort(choice)
 		}
 		state := stateStyle[choice.state].Render("●")
 		name := choice.name
@@ -64,12 +118,12 @@ func buildContainerView(m model) string {
 		if _, ok := m.selected[i]; ok {
 			check = styleCheck.Render("✔")
 		}
-		s += fmt.Sprintf("%s %s %s %s", cursor, check, state, name) + "\n"
+		bodyL += fmt.Sprintf("%s %s %s %s", cursor, check, state, name) + "\n"
 	}
 
 	// pad body height
-	padBodyHeight(&s, len(m.containers)+2)
-	return bodyLStyle.Render(s)
+	padBodyHeight(&bodyL, len(m.containers)+2)
+	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
 }
 
 func (m model) View() string {
@@ -80,13 +134,13 @@ func (m model) View() string {
 	// body L
 	switch m.page {
 	case pageContainer:
-		bodyL = buildContainerView(m)
+		bodyL, bodyR = buildContainerView(m)
 	case pageImage:
 		bodyL = buildImageView(m)
 	}
 
 	// body R
-	bodyR = bodyRStyle.Render(buildLogView(m))
+	// bodyR = bodyRStyle.Render(buildLogView(m))
 
 	//  title
 	title := strings.Repeat(" ", 36) + "🐳 Docker"
