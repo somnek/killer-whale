@@ -21,7 +21,7 @@ func buildContainerDescShort(c container) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, 20, "..."))
+	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-6, "..."))
 	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
 	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
 	desc += fmt.Sprintf("State : %s\n", container.State.String())
@@ -40,7 +40,7 @@ func buildContainerDescFull(c container) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	desc := fmt.Sprintf("ID: %s\n", container.ID)
+	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."))
 	desc += fmt.Sprintf("Image: %s\n", container.Config.Image)
 	desc += fmt.Sprintf("Cmd: %s\n", strings.Join(container.Config.Cmd, " "))
 	desc += fmt.Sprintf("Created: %s\n", container.Created)
@@ -139,9 +139,6 @@ func (m model) View() string {
 		bodyL = buildImageView(m)
 	}
 
-	// body R
-	// bodyR = bodyRStyle.Render(buildLogView(m))
-
 	//  title
 	title := strings.Repeat(" ", 36) + "🐳 Docker"
 	titleStyle.MarginLeft((m.width - (fixedWidth + lipgloss.Width(title)/2)) / 2)
@@ -162,3 +159,6 @@ func padBodyHeight(s *string, itemCount int) {
 		*s += strings.Repeat("\n", minHeightPerView-itemCount)
 	}
 }
+
+// body R
+// bodyR = bodyRStyle.Render(buildLogView(m))

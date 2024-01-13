@@ -29,6 +29,8 @@ const (
 	minHeightPerView = 8  // 6 item
 	maxHeightPerView = 12 // 10 item
 	fixedWidth       = 80
+	fixedBodyLWidth  = 36 // exclude padding
+	fixedBodyRWidth  = 44 // exclude padding
 )
 
 var (
@@ -42,11 +44,11 @@ var (
 	}
 
 	bodyLStyle = lipgloss.NewStyle().
-			Padding(1, 2, 0, 4).
+			Padding(1, 0, 0, 4).
 			Border(lipgloss.RoundedBorder(), true, false, false, true).
 			BorderForeground(black)
 	bodyRStyle = lipgloss.NewStyle().
-			Padding(1, 4, 0, 2).
+			Padding(1, 4, 0, 0).
 			PaddingLeft(4).
 			Border(lipgloss.RoundedBorder(), true, true, false, false).
 			Foreground(black).
