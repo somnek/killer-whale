@@ -6,7 +6,7 @@
 
 Killer Whale is a Docker TUI for terminal dwellers. It provides an intuitive, easy-to-use interface for managing your Docker containers without leaving the comfort of your command line.
 
-- more feature coming soon, thought its temping to add more feature, killer-whale meant to be as minimalistic as possible, if you are looking for docker tui with more features, check out [lazydocker](https://github.com/jesseduffield/lazydocker) by jesseduffield.
+- more feature coming soon, thought its temping to add more feature, `killer-whale` meant to be as **easy to use** & as **minimalistic** as possible.
 
 ## Usage
 

@@ -22,8 +22,13 @@ const (
 	black        = lipgloss.Color("#3C3C3C")
 	lightPink    = lipgloss.Color("#F9CFF2")
 	midPink      = lipgloss.Color("#F786AA")
+)
 
-	lastPage = 4
+const (
+	lastPage         = 4
+	minHeightPerView = 8  // 6 item
+	maxHeightPerView = 12 // 10 item
+	fixedWidth       = 80
 )
 
 var (
@@ -38,12 +43,12 @@ var (
 
 	bodyLStyle = lipgloss.NewStyle().
 			Padding(1, 2, 0, 4).
-			Border(lipgloss.RoundedBorder(), true, false, true, true).
+			Border(lipgloss.RoundedBorder(), true, false, false, true).
 			BorderForeground(black)
 	bodyRStyle = lipgloss.NewStyle().
 			Padding(1, 4, 0, 2).
 			PaddingLeft(4).
-			Border(lipgloss.RoundedBorder(), true, true, true, false).
+			Border(lipgloss.RoundedBorder(), true, true, false, false).
 			Foreground(black).
 			BorderForeground(black)
 
@@ -51,10 +56,7 @@ var (
 			Align(lipgloss.Left)
 
 	titleStyle = lipgloss.NewStyle().
-			Background(orange).
-			Foreground(black).Bold(true).
-			Align(lipgloss.Center).
-			Blink(true)
+			Bold(true)
 
 	hintStyle = lipgloss.NewStyle().
 			Foreground(grey).

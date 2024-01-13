@@ -13,6 +13,6 @@ func logToFile(texts ...any) {
 	defer f.Close()
 	log.SetOutput(f)
 	for _, t := range texts {
-		log.Println(t)
+		log.Print(t)
 	}
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type container struct {
@@ -52,10 +52,12 @@ func (m model) Init() tea.Cmd {
 func initialModel() model {
 	containers := getContainers()
 	images := getImages()
+	log := "placeholder"
 	return model{
 		containers: containers,
 		images:     images,
 		selected:   make(map[int]struct{}),
 		page:       pageContainer,
+		logs:       log,
 	}
 }
