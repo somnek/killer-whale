@@ -28,7 +28,7 @@ const (
 	lastPage         = 4
 	minHeightPerView = 8  // 6 item
 	maxHeightPerView = 12 // 10 item
-	fixedWidth       = 92
+	fixedWidth       = 88 // 92
 	fixedBodyLWidth  = 36 // exclude padding
 	fixedBodyRWidth  = 44 // exclude padding
 )
@@ -73,6 +73,10 @@ var (
 				Foreground(black).
 				Background(grey)
 
-	styleCheck = lipgloss.NewStyle().
+	checkStyle = lipgloss.NewStyle().
 			Foreground(hotGreen)
+
+	itemCountStyle = lipgloss.NewStyle().
+			Foreground(frenchBlue).
+			Bold(true)
 )

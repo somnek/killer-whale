@@ -84,7 +84,7 @@ var keys = keyMap{
 		key.WithHelp("esc", "clear selection"),
 	),
 	SelectAll: key.NewBinding(
-		key.WithKeys("shift+a"),
+		key.WithKeys("A"),
 		key.WithHelp("shift+a", "select all"),
 	),
 	Tab: key.NewBinding(
@@ -96,15 +96,15 @@ var keys = keyMap{
 		key.WithHelp("space/enter", "toggle selection"),
 	),
 	Remove: key.NewBinding(
-		key.WithKeys("x"),
-		key.WithHelp("x", "remove container"),
+		key.WithKeys("X"),
+		key.WithHelp("shift+x", "remove container"),
 	),
 	Restart: key.NewBinding(
 		key.WithKeys("r"),
 		key.WithHelp("r", "restart container"),
 	),
 	Kill: key.NewBinding(
-		key.WithKeys("shift+k"),
+		key.WithKeys("K"),
 		key.WithHelp("shift+k", "kill container"),
 	),
 	Stop: key.NewBinding(
@@ -120,7 +120,7 @@ var keys = keyMap{
 		key.WithHelp("p", "pause container"),
 	),
 	Unpause: key.NewBinding(
-		key.WithKeys("shift+p"),
+		key.WithKeys("P"),
 		key.WithHelp("shift+p", "unpause container"),
 	),
 }

@@ -96,7 +96,8 @@ func buildImageView(m model) string {
 func buildLogView(m model) string {
 	var s string
 	s += m.logs
-	logStyle.MarginLeft((fixedWidth - len(s)) / 2)
+	logStyle.MarginLeft((fixedWidth - lipgloss.Width(s)) / 2)
+	logStyle.AlignHorizontal(lipgloss.Center)
 	return logStyle.Render(s)
 }
 
@@ -115,7 +116,7 @@ func buildContainerView(m model) (string, string) {
 		name := choice.name
 		name = runewidth.Truncate(name, 25, "...")
 		if _, ok := m.selected[i]; ok {
-			check = styleCheck.Render("✔")
+			check = checkStyle.Render("✔")
 		}
 		bodyL += fmt.Sprintf("%s %s %s %s", cursor, check, state, name) + "\n"
 	}
@@ -140,8 +141,9 @@ func (m model) View() string {
 
 	//  title
 	// title := strings.Repeat(" ", 36) + "🐳 Docker"
-	// titleStyle.MarginLeft((m.width - (fixedWidth + lipgloss.Width(title)/2)) / 2)
-	// title = titleStyle.Render(title)
+	title := "🐳 Docker"
+	titleStyle.MarginLeft((m.width / 2) - (lipgloss.Width(title) / 2))
+	title = titleStyle.Render(title)
 
 	// join left + right component
 	body = lipgloss.JoinHorizontal(lipgloss.Left, bodyL, bodyR)
@@ -154,7 +156,7 @@ func (m model) View() string {
 	final += lipgloss.JoinVertical(lipgloss.Top, body, bottom)
 	appStyle.MarginLeft((m.width - fixedWidth) / 2)
 
-	return appStyle.Render(final) + "\n"
+	return title + "\n" + appStyle.Render(final) + "\n"
 }
 
 func padBodyHeight(s *string, itemCount int) {
