@@ -25,104 +25,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Remove): // remove
-			if len(m.selected) == 0 {
-				container := m.containers[m.cursor]
-				m.logs = removeAndWriteLog(container)
-				return m, nil
-			}
-
-			// force for now
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = removeAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			m.cursor = 0
-			return m, nil
+			return removeAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.Restart): // restart
-
-			if len(m.selected) == 0 {
-				container := m.containers[m.cursor]
-				m.logs = restartAndWriteLog(container)
-				return m, nil
-			}
-
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = restartAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			return m, nil
+			return restartAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.Kill): // kill
-			if len(m.selected) == 0 {
-				container := m.containers[m.cursor]
-				m.logs = killAndWriteLog(container)
-				return m, nil
-			}
-
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = killAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			return m, nil
+			return killAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.Stop): // stop
-			if len(m.selected) == 0 {
-				container := m.containers[m.cursor]
-				m.logs = stopAndWriteLog(container)
-				return m, nil
-			}
-
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = stopAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			return m, nil
+			return stopAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.Start): // start
-			if len(m.selected) == 0 {
-				container := m.containers[m.cursor]
-				m.logs = startAndWriteLog(container)
-				return m, nil
-			}
-
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = startAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			return m, nil
+			return startAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.Pause): // pause
-			if len(m.selected) == 0 {
-				m.logs = "No container selected\n"
-				return m, nil
-			}
-
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = pauseAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			return m, nil
+			return pauseAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.Unpause): // unpause
-			if len(m.selected) == 0 {
-				container := m.containers[m.cursor]
-				m.logs = unpauseAndWriteLog(container)
-				return m, nil
-			}
-
-			for k := range m.selected {
-				container := m.containers[k]
-				m.logs = unpauseAndWriteLog(container)
-			}
-			m.selected = make(map[int]struct{})
-			return m, nil
+			return unpauseAndWriteLog(m)
 
 		case key.Matches(msg, m.keys.SelectAll): // slecet all
 			if len(m.containers) == len(m.selected) {

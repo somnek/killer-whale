@@ -4,139 +4,319 @@ import (
 	"fmt"
 	"log"
 
+	tea "github.com/charmbracelet/bubbletea"
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-func unpauseAndWriteLog(container Container) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatalf("failed to create Docker client: %v", err)
-	}
-
-	state := container.state
-	id := container.id
-
-	var logs string
-	if state == "paused" {
-		unpauseContainer(client, id)
-		logs = "✅ Unpaused " + container.name + "\n"
-	} else {
-		logs = "🚧  " + container.name + " is not running\n"
-	}
-	return logs
+type actionResult struct {
+	success []Container
+	failed  []Container
 }
 
-func pauseAndWriteLog(container Container) string {
+func unpauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
-	state := container.state
-	id := container.id
-
-	var logs string
-	if state == "running" {
-		pauseContainer(client, id)
-		logs = "⏳ Paused " + container.name + "\n"
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
 	} else {
-		logs = "🚧  " + container.name + " is not running\n"
-	}
-	return logs
-}
-
-func startAndWriteLog(container Container) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatalf("failed to create Docker client: %v", err)
-	}
-
-	state := container.state
-	id := container.id
-
-	var logs string
-	if state == "exited" || state == "created" {
-		go startContainer(client, id)
-		if err != nil {
-			logs = fmt.Sprintf("🚧  %s\n", err.Error())
-		} else {
-			logs = "🚀 Started " + container.name + "\n"
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
 		}
-	} else {
-		logs = "🚧  " + container.name + " already running\n"
 	}
-	return logs
+
+	res := actionResult{}
+	for _, c := range targets {
+		if c.state == "paused" {
+			go unpauseContainer(client, c.id)
+			res.success = append(res.success, c)
+		} else {
+			res.failed = append(res.failed, c)
+		}
+	}
+
+	var logs string
+	successCount, failedCount := len(res.success), len(res.failed)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"✅ Unpaused %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
+	}
+
+	if failedCount > 0 {
+		logs += fmt.Sprintf(
+			"🚧 Skip unpausing %v container(s), can only unpausing paused container...\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+	}
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	return m, nil
 }
 
-func removeAndWriteLog(container Container) string {
+func pauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
-	id := container.id
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
+	} else {
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
+		}
+	}
+
+	res := actionResult{}
+	for _, c := range targets {
+		if c.state == "running" {
+			go pauseContainer(client, c.id)
+			res.success = append(res.success, c)
+		} else {
+			res.failed = append(res.failed, c)
+		}
+	}
 
 	var logs string
-	go removeContainer(client, id)
-	logs = "🗑️  Remove " + container.name + "\n"
-	return logs
+	successCount, failedCount := len(res.success), len(res.failed)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"⏳ Paused  %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
+	}
+
+	if failedCount > 0 {
+		logs += fmt.Sprintf(
+			"🚧 %v container(s) is not running, skipping...\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+	}
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	return m, nil
 }
 
-func restartAndWriteLog(container Container) string {
+func stopAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
-	state := container.state
-	id := container.id
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
+	} else {
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
+		}
+	}
+
+	res := actionResult{}
+	for _, c := range targets {
+		if c.state == "running" || c.state == "restarting" {
+			go stopContainer(client, c.id)
+			res.success = append(res.success, c)
+		} else {
+			res.failed = append(res.failed, c)
+		}
+	}
 
 	var logs string
-	if state == "running" {
-		go restartContainer(client, id)
-		logs = "🔃 Restarted " + container.name + "\n"
-	} else {
-		logs = "🚧  " + container.name + " not running\n"
+	successCount, failedCount := len(res.success), len(res.failed)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"🛑 Stopping %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
-	return logs
+
+	if failedCount > 0 {
+		logs += fmt.Sprintf(
+			"🚧 unable to stop %v container(s), skipping...\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+	}
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	return m, nil
 }
 
-func killAndWriteLog(container Container) string {
+func startAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
-	state := container.state
-	id := container.id
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
+	} else {
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
+		}
+	}
+
+	res := actionResult{}
+	for _, c := range targets {
+		if c.state == "exited" || c.state == "created" {
+			go startContainer(client, c.id)
+			res.success = append(res.success, c)
+		} else {
+			res.failed = append(res.failed, c)
+		}
+	}
 
 	var logs string
-	if state == "running" {
-		killContainer(client, id)
-		logs = "🔪 Killed " + container.name + "\n"
-	} else {
-		logs = "🚧 " + container.name + " already stopped\n"
+	successCount, failedCount := len(res.success), len(res.failed)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"🚀 Starting %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
-	return logs
+
+	if failedCount > 0 {
+		logs += fmt.Sprintf(
+			"🚧 %v container(s) already running, skipping...\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+	}
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	return m, nil
 }
 
-func stopAndWriteLog(container Container) string {
+func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
-	state := container.state
-	id := container.id
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
+	} else {
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
+		}
+	}
+
+	res := actionResult{}
+	for _, c := range targets {
+		go removeContainer(client, c.id)
+		res.success = append(res.success, c)
+	}
 
 	var logs string
-	if state == "running" || state == "restarting" {
-		go stopContainer(client, id)
-		logs = "🛑 Stop " + container.name + "\n"
-	} else {
-		logs = "🚧  " + " unable to stop " + container.name + "\n"
+	successCount := len(res.success)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"🗑️  Removing %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
-	return logs
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	m.cursor = 0
+	return m, nil
+}
+
+func restartAndWriteLog(m model) (tea.Model, tea.Cmd) {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatalf("failed to create Docker client: %v", err)
+	}
+
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
+	} else {
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
+		}
+	}
+
+	res := actionResult{}
+	for _, c := range targets {
+		if c.state == "running" {
+			go restartContainer(client, c.id)
+			res.success = append(res.success, c)
+		} else {
+			res.failed = append(res.failed, c)
+		}
+	}
+
+	var logs string
+	successCount, failedCount := len(res.success), len(res.failed)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"🌀 Restarted %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
+	}
+
+	if failedCount > 0 {
+		logs += fmt.Sprintf(
+			"🚧 Skip restarting %v containera(s), container must be in a running state...\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+	}
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	return m, nil
+}
+
+func killAndWriteLog(m model) (tea.Model, tea.Cmd) {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatalf("failed to create Docker client: %v", err)
+	}
+
+	targets := []Container{}
+	if len(m.selected) == 0 {
+		targets = append(targets, m.containers[m.cursor])
+	} else {
+		for k := range m.selected {
+			targets = append(targets, m.containers[k])
+		}
+	}
+
+	res := actionResult{}
+	for _, c := range targets {
+		if c.state == "running" {
+			killContainer(client, c.id)
+			res.success = append(res.success, c)
+		} else {
+			res.failed = append(res.failed, c)
+		}
+	}
+
+	var logs string
+	successCount, failedCount := len(res.success), len(res.failed)
+
+	if successCount > 0 {
+		logs += fmt.Sprintf(
+			"🔪 Killed %v container(s)\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
+	}
+
+	if failedCount > 0 {
+		logs += fmt.Sprintf(
+			"🚧 skip killing %v container(s), can only kill running container...\n",
+			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+	}
+
+	m.logs = logs
+	m.selected = make(map[int]struct{})
+	return m, nil
 }
 
 func getContainers() []Container {
