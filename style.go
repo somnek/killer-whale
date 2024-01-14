@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	stateStyle = map[string]lipgloss.Style{
+	stateStyleMap = map[string]lipgloss.Style{
 		"created":    lipgloss.NewStyle().Foreground(midPurple),
 		"running":    lipgloss.NewStyle().Foreground(green),
 		"paused":     lipgloss.NewStyle().Foreground(yellow),

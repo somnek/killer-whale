@@ -30,6 +30,7 @@ type model struct {
 	images     []Image
 	cursor     int
 	selected   map[int]struct{}
+	keys       keyMap
 	logs       string
 	page       int
 	width      int
@@ -60,5 +61,6 @@ func initialModel() model {
 		images:     images,
 		selected:   make(map[int]struct{}),
 		page:       pageContainer,
+		keys:       keys,
 	}
 }

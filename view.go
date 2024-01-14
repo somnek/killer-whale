@@ -111,7 +111,7 @@ func buildContainerView(m model) (string, string) {
 			bodyR = buildContainerDescShort(choice)
 		}
 
-		state := stateStyle[choice.state].Render("●")
+		state := stateStyleMap[choice.state].Render("●")
 		name := choice.name
 		name = runewidth.Truncate(name, 25, "...")
 		if _, ok := m.selected[i]; ok {

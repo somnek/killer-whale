@@ -10,7 +10,7 @@ import (
 func unpauseAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	state := container.state
@@ -29,7 +29,7 @@ func unpauseAndWriteLog(container Container) string {
 func pauseAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	state := container.state
@@ -48,7 +48,7 @@ func pauseAndWriteLog(container Container) string {
 func startAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	state := container.state
@@ -71,7 +71,7 @@ func startAndWriteLog(container Container) string {
 func removeAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	id := container.id
@@ -85,7 +85,7 @@ func removeAndWriteLog(container Container) string {
 func restartAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	state := container.state
@@ -104,7 +104,7 @@ func restartAndWriteLog(container Container) string {
 func killAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	state := container.state
@@ -123,7 +123,7 @@ func killAndWriteLog(container Container) string {
 func stopAndWriteLog(container Container) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 
 	state := container.state
@@ -142,7 +142,7 @@ func stopAndWriteLog(container Container) string {
 func getContainers() []Container {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 	containers := []Container{}
 	for _, c := range listContainers(client, true) {
@@ -157,7 +157,7 @@ func getContainers() []Container {
 func getImages() []Image {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create Docker client: %v", err)
 	}
 	images := []Image{}
 	for _, c := range listImages(client, true) {
