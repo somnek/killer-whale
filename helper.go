@@ -269,7 +269,7 @@ func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	if successCount > 0 {
 		logs += fmt.Sprintf(
-			"🗑️  Removing %v container(s)\n",
+			"🗑️  Removed %v container(s)\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
 
@@ -344,8 +344,8 @@ func killAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	res := actionResult{}
 	for _, c := range targets {
 		if c.state == "running" {
-			killContainer(client, c.id)
-			desiredState := "x"
+			go killContainer(client, c.id)
+			desiredState := "exited"
 			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
 		} else {
@@ -358,13 +358,13 @@ func killAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	if successCount > 0 {
 		logs += fmt.Sprintf(
-			"🔪 Killed %v container(s)\n",
+			"🔪 Killing %v container(s)\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
 
 	if failedCount > 0 {
 		logs += fmt.Sprintf(
-			"🚧 skip killing %v container(s), can only kill running container...\n",
+			"🚧 Skip killing %v container(s), can only kill running container...\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
 	}
 
@@ -397,23 +397,8 @@ func getImages() []Image {
 	for _, c := range listImages(client, true) {
 		tags := c.RepoTags
 		var name string
-		var size int64
 		if len(tags) > 0 {
 			name = tags[0]
-			size = c.Size
-			// format size (GB, MB, KB)
-			if size > 1000000000 {
-				size = size / 1000000000
-				name = fmt.Sprintf("%s (%dGB)", name, size)
-			} else if size > 1000000 {
-				size = size / 1000000
-				name = fmt.Sprintf("%s (%dMB)", name, size)
-			} else if size > 1000 {
-				size = size / 1000
-				name = fmt.Sprintf("%s (%dKB)", name, size)
-			} else {
-				name = fmt.Sprintf("%s (%dB)", name, size)
-			}
 			c := Image{name: name, id: c.ID}
 			images = append(images, c)
 		}

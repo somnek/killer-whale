@@ -67,7 +67,7 @@ func initialModel() model {
 	// containers
 	containers := getContainers()
 	images := getImages()
-	containers[cursor].desc = buildContainerDescShort(containers[cursor])
+	containers[cursor].desc = buildContainerDescShort(containers[cursor].id)
 
 	// spinner
 	s := spinner.New()

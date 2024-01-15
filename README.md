@@ -4,11 +4,12 @@
   <img style="width:300px" src="https://github.com/somnek/killer-whale/blob/main/src/logo.png?raw=true"/>
 </p>
 
-Killer Whale is a Docker client that runs in your terminal. It provides an intuitive, easy-to-use interface for managing your Docker containers.  
+Killer Whale is a Docker client that runs in your terminal. It provides an intuitive, easy-to-use interface for managing your Docker containers.
 
 ## Features
+
 1. stop, start, kill, remove, pause, unpause
-2. allows bulk action
+2. bulk actions on multiple containers
 3. inspect containers
 
 Thought its tempting to add more features, `killer-whale` meant to be as **easy to use** & as **minimalistic** as possible.
