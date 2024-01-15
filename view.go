@@ -106,7 +106,6 @@ func buildImageDescShort(id string) string {
 	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
 	desc += fmt.Sprintf("Cmd     : %s\n", strings.Join(image.Config.Cmd, " "))
 	desc += fmt.Sprintf("Volumes : %v\n", formatImageVolumes(image.Config.Volumes))
-	// desc += fmt.Sprintf("Volumes : %v\n", image.Config.Volumes)
 	return desc
 }
 
@@ -124,36 +123,6 @@ func buildImageView(m model) (string, string) {
 	}
 	padBodyHeight(&bodyL, len(m.images)+2)
 	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
-
-	// var s string
-	// // truncate
-	// shouldTruncate := false
-	// imageList := m.images
-	// if len(m.images) > 10 {
-	// 	shouldTruncate = true
-	// 	imageList = m.images[:10]
-	// }
-
-	// for i, choice := range imageList {
-	// 	cursor := "  " // default cursor
-	// 	if m.cursor == i {
-	// 		cursor = "👉"
-	// 	}
-	// 	checked := " "
-	// 	if _, ok := m.selected[i]; ok {
-	// 		checked = "x"
-	// 	}
-	// 	name := choice.name
-	// 	if len(name) > 25 {
-	// 		name = name[:25] + "..."
-	// 	}
-	// 	s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, name)
-	// }
-	// // add more images message
-	// if shouldTruncate {
-	// 	s += fmt.Sprintf("\n     %d more images... ↓\n", len(m.images)-10)
-	// }
-	// return bodyLStyle.Render(s)
 }
 
 func buildLogView(m model) string {

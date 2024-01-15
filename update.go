@@ -6,6 +6,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func getCurrentViewItemCount(m model) int {
+	var itemCount int
+	if m.page == pageContainer {
+		itemCount = len(m.containers)
+	} else {
+		itemCount = len(m.images)
+	}
+	return itemCount
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -32,7 +42,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// processes
 		m.processes = updatePendingProcesses(m)
 
-		logToFile(m.processes)
 		return m, doTick()
 
 	case tea.WindowSizeMsg:
@@ -82,14 +91,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case key.Matches(msg, m.keys.Up): // move cursor up
+			itemCount := getCurrentViewItemCount(m)
+			// increment cursor unless we're at the beginning of the list
 			if m.cursor > 0 {
 				m.cursor--
 			} else {
-				m.cursor = len(m.containers) - 1
+				m.cursor = itemCount - 1
 			}
 
 		case key.Matches(msg, m.keys.Down): // move cursor down
-			if m.cursor < len(m.containers)-1 {
+			itemCount := getCurrentViewItemCount(m)
+
+			// decrement cursor unless we're at the end of the list
+			if m.cursor < itemCount-1 {
 				m.cursor++
 			} else {
 				m.cursor = 0
