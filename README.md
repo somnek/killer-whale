@@ -1,12 +1,17 @@
+# killer-whale 🐳
+
 <p align="center">
   <img style="width:300px" src="https://github.com/somnek/killer-whale/blob/main/src/logo.png?raw=true"/>
 </p>
 
-# killer-whale 🐳
+Killer Whale is a Docker client that runs in your terminal. It provides an intuitive, easy-to-use interface for managing your Docker containers.  
 
-Killer Whale is a Docker TUI for terminal dwellers. It provides an intuitive, easy-to-use interface for managing your Docker containers without leaving the comfort of your command line.
+## Features
+1. stop, start, kill, remove, pause, unpause
+2. allows bulk action
+3. inspect containers
 
-- more feature coming soon, thought its temping to add more feature, `killer-whale` meant to be as **easy to use** & as **minimalistic** as possible.
+Thought its tempting to add more features, `killer-whale` meant to be as **easy to use** & as **minimalistic** as possible.
 
 ## Usage
 
@@ -25,7 +30,7 @@ go run .
 or build it:
 
 ```bash
-cd killer-whale && go build -o killer-whale
+cd killer-whale && go build -o killer
 ```
 
 Once the build is complete, move the executable to a directory in your system's `PATH` environment variable so that you can run it from anywhere.
