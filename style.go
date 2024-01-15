@@ -22,6 +22,18 @@ const (
 	black        = lipgloss.Color("#3C3C3C")
 	lightPink    = lipgloss.Color("#F9CFF2")
 	midPink      = lipgloss.Color("#F786AA")
+	pitchBlack   = lipgloss.Color("#1C1C1C")
+
+	paletteA1  = lipgloss.Color("#EF6461")
+	paletteA2  = lipgloss.Color("#E4B363")
+	paletteA3  = lipgloss.Color("#E8E9EB")
+	paletteA4  = lipgloss.Color("#E0DFD5")
+	paletteA5  = lipgloss.Color("#303A2B")
+	paletteA6  = lipgloss.Color("#313638")
+	paletteA7  = lipgloss.Color("#517664")
+	paletteA8  = lipgloss.Color("#2C5530")
+	paletteA9  = lipgloss.Color("#26547C")
+	paletteA10 = lipgloss.Color("#255C99")
 )
 
 const (
@@ -35,11 +47,11 @@ const (
 
 var (
 	stateStyleMap = map[string]lipgloss.Style{
-		"created":    lipgloss.NewStyle().Foreground(midPurple),
-		"running":    lipgloss.NewStyle().Foreground(green),
-		"paused":     lipgloss.NewStyle().Foreground(yellow),
+		"created":    lipgloss.NewStyle().Foreground(paletteA5),
+		"running":    lipgloss.NewStyle().Foreground(paletteA4),
+		"paused":     lipgloss.NewStyle().Foreground(paletteA2),
 		"restarting": lipgloss.NewStyle().Foreground(orange),
-		"exited":     lipgloss.NewStyle().Foreground(midPink),
+		"exited":     lipgloss.NewStyle().Foreground(paletteA1),
 		"dead":       lipgloss.NewStyle().Foreground(black),
 	}
 
@@ -55,7 +67,7 @@ var (
 
 	appStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			Foreground(black)
+			BorderForeground(black)
 	bodyStyle = lipgloss.NewStyle().
 			Align(lipgloss.Left)
 
@@ -78,5 +90,8 @@ var (
 
 	itemCountStyle = lipgloss.NewStyle().
 			Foreground(frenchBlue).
+			Bold(true)
+	spinnerStyle = lipgloss.NewStyle().
+			Foreground(celesBlue).
 			Bold(true)
 )

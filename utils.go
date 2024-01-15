@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"os"
+	"time"
 )
 
 func logToFile(texts ...any) {
@@ -15,4 +17,12 @@ func logToFile(texts ...any) {
 	for _, t := range texts {
 		log.Print(t)
 	}
+}
+
+func waitRandomSeconds() {
+	// Generate a random number between 1 and 10
+	seconds := rand.Intn(10) + 1
+
+	// Wait for the random number of seconds
+	time.Sleep(time.Duration(seconds) * time.Second)
 }

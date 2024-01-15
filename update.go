@@ -2,11 +2,17 @@ package main
 
 import (
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
+
+	case spinner.TickMsg:
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 
 	case TickMsg:
 		// containers
@@ -15,6 +21,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// images
 		images := getImages()
 		m.images = images
+
+		// blink switch
+		if m.blinkSwitch == on {
+			m.blinkSwitch = off
+		} else {
+			m.blinkSwitch = on
+		}
+
+		// processes
+		m.processes = updatePendingProcesses(m)
+
+		logToFile(m.processes)
 		return m, doTick()
 
 	case tea.WindowSizeMsg:

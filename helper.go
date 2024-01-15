@@ -13,6 +13,45 @@ type actionResult struct {
 	failed  []Container
 }
 
+const (
+	on int = iota
+	off
+)
+
+func checkProcess(id string, processes map[string]string) bool {
+	if _, ok := processes[id]; ok {
+		return true
+	}
+	return false
+}
+
+// updatePendingProcesses cross check the actual state of container
+// with the desired state in m.processes
+// if the state match, remove the container from m.processes
+// implies that the action is completed
+// return the updated m.processes
+func updatePendingProcesses(m model) map[string]string {
+	containers := m.containers
+	for _, c := range containers {
+		id := c.id
+		state := c.state
+		desiredState := m.processes[id]
+		if _, ok := m.processes[id]; ok {
+			if state == desiredState {
+				delete(m.processes, id)
+			}
+		}
+	}
+	return m.processes
+}
+
+// addProcess add Process to m.processes
+// container Processes are used to control the blinkSwitch
+func addProcess(m *model, id, desiredState string) {
+	logToFile(fmt.Sprintf("addProcess: %s %s", id, desiredState))
+	m.processes[id] = desiredState
+}
+
 func unpauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
@@ -32,6 +71,8 @@ func unpauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	for _, c := range targets {
 		if c.state == "paused" {
 			go unpauseContainer(client, c.id)
+			desiredState := "running"
+			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
 		} else {
 			res.failed = append(res.failed, c)
@@ -77,6 +118,8 @@ func pauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	for _, c := range targets {
 		if c.state == "running" {
 			go pauseContainer(client, c.id)
+			desiredState := "paused"
+			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
 		} else {
 			res.failed = append(res.failed, c)
@@ -94,7 +137,7 @@ func pauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	if failedCount > 0 {
 		logs += fmt.Sprintf(
-			"🚧 %v container(s) is not running, skipping...\n",
+			"🚧 Unable to pause %v container(s), skipping...\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
 	}
 
@@ -122,6 +165,8 @@ func stopAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	for _, c := range targets {
 		if c.state == "running" || c.state == "restarting" {
 			go stopContainer(client, c.id)
+			desiredState := "exited"
+			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
 		} else {
 			res.failed = append(res.failed, c)
@@ -139,7 +184,7 @@ func stopAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	if failedCount > 0 {
 		logs += fmt.Sprintf(
-			"🚧 unable to stop %v container(s), skipping...\n",
+			"🚧 Unable to stop %v container(s), skipping...\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
 	}
 
@@ -167,7 +212,10 @@ func startAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	for _, c := range targets {
 		if c.state == "exited" || c.state == "created" {
 			go startContainer(client, c.id)
+			desiredState := "running"
+			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
+
 		} else {
 			res.failed = append(res.failed, c)
 		}
@@ -211,6 +259,8 @@ func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	res := actionResult{}
 	for _, c := range targets {
 		go removeContainer(client, c.id)
+		desiredState := "x"
+		addProcess(&m, c.id, desiredState)
 		res.success = append(res.success, c)
 	}
 
@@ -248,6 +298,8 @@ func restartAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	for _, c := range targets {
 		if c.state == "running" {
 			go restartContainer(client, c.id)
+			desiredState := "running"
+			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
 		} else {
 			res.failed = append(res.failed, c)
@@ -293,6 +345,8 @@ func killAndWriteLog(m model) (tea.Model, tea.Cmd) {
 	for _, c := range targets {
 		if c.state == "running" {
 			killContainer(client, c.id)
+			desiredState := "x"
+			addProcess(&m, c.id, desiredState)
 			res.success = append(res.success, c)
 		} else {
 			res.failed = append(res.failed, c)

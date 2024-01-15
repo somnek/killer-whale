@@ -112,7 +112,12 @@ func buildContainerView(m model) (string, string) {
 			bodyR = buildContainerDescShort(choice)
 		}
 
-		state := stateStyleMap[choice.state].Render("●")
+		isProcessing := checkProcess(choice.id, m.processes)
+		stateStyle := stateStyleMap[choice.state]
+		if isProcessing && m.blinkSwitch == on {
+			stateStyle = stateStyle.Copy().Foreground(pitchBlack)
+		}
+		state := stateStyle.Render("●")
 		name := choice.name
 		name = runewidth.Truncate(name, 25, "...")
 		if _, ok := m.selected[i]; ok {
@@ -140,8 +145,7 @@ func (m model) View() string {
 	}
 
 	//  title
-	// title := strings.Repeat(" ", 36) + "🐳 Docker"
-	title := "🐳 Docker"
+	title := "🐳 Docker" + "  " + m.spinner.View()
 	titleStyle.MarginLeft((m.width / 2) - (lipgloss.Width(title) / 2))
 	title = titleStyle.Render(title)
 
