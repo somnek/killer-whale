@@ -10,87 +10,150 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-func buildContainerDescShort(c Container) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
+func formatImageVolumes(volumeMap map[string]struct{}) string {
+	var s string
+	for vol := range volumeMap {
+		s += fmt.Sprintf("%s\n", vol)
 	}
-	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
-		ID: c.id,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-6, "..."))
-	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
-	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
-	desc += fmt.Sprintf("State : %s\n", container.State.String())
-	desc += fmt.Sprintf("Ports : %v\n", container.NetworkSettings.Ports)
-	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
-	return desc
+	s = strings.TrimSuffix(s, "\n")
+	return s
+
 }
-func buildContainerDescFull(c Container) string {
+
+func formatMounts(mounts []docker.Mount) string {
+	var s string
+	for _, mount := range mounts {
+		s += fmt.Sprintf("(source) %s\n", mount.Source)
+		s += fmt.Sprintf("        (des)    %s\n", mount.Destination)
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+
+func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
+	var s string
+	for containerPort, hostMachinePorts := range portsMap {
+		s += fmt.Sprintf("%s (container)\n", containerPort)
+		for _, port := range hostMachinePorts {
+			s += fmt.Sprintf("        -> %s:%s (host)\n", port.HostIP, port.HostPort)
+		}
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+
+func buildContainerDescShort(id string) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		log.Fatal(err)
 	}
 	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
-		ID: c.id,
+		ID: id,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."))
-	desc += fmt.Sprintf("Image: %s\n", container.Config.Image)
-	desc += fmt.Sprintf("Cmd: %s\n", strings.Join(container.Config.Cmd, " "))
-	desc += fmt.Sprintf("Created: %s\n", container.Created)
-	desc += fmt.Sprintf("State: %s\n", container.State.String())
-	desc += fmt.Sprintf("Ports: %v\n", container.NetworkSettings.Ports)
-	desc += fmt.Sprintf("Mounts: %v\n", container.Mounts)
-	desc += fmt.Sprintf("Labels: %v\n", container.Config.Labels)
-	desc += fmt.Sprintf("Env: %v\n", container.Config.Env)
-	desc += fmt.Sprintf("HostConfig: %v\n", container.HostConfig)
-	desc += fmt.Sprintf("NetworkSettings: %v\n", container.NetworkSettings)
-	desc += fmt.Sprintf("LogPath: %s\n", container.LogPath)
-	desc += fmt.Sprintf("RestartCount: %d\n", container.RestartCount)
-	desc += fmt.Sprintf("Driver: %s\n", container.Driver)
-	desc += fmt.Sprintf("Platform: %s\n", container.Platform)
-	desc += fmt.Sprintf("ProcessLabel: %s\n", container.ProcessLabel)
-	desc += fmt.Sprintf("IP: %s\n", container.NetworkSettings.IPAddress)
+	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
+	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
+	desc += fmt.Sprintf("State : %s\n", container.State.String())
+	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
+	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
+	return desc
+}
+func buildContainerDescFull(id string) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
+		ID: id,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	desc := fmt.Sprintf("ID              : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."))
+	desc += fmt.Sprintf("Image           : %s\n", container.Config.Image)
+	desc += fmt.Sprintf("Cmd             : %s\n", strings.Join(container.Config.Cmd, " "))
+	desc += fmt.Sprintf("Created         : %s\n", container.Created.Format("2006-01-02 15:04:05"))
+	desc += fmt.Sprintf("State           : %s\n", container.State.String())
+	desc += fmt.Sprintf("Ports           : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
+	desc += fmt.Sprintf("Mounts          : %v\n", formatMounts(container.Mounts))
+	desc += fmt.Sprintf("Labels          : %v\n", container.Config.Labels)
+	desc += fmt.Sprintf("Env             : %v\n", container.Config.Env)
+	desc += fmt.Sprintf("HostConfig      : %v\n", container.HostConfig)
+	desc += fmt.Sprintf("NetworkSettings : %v\n", container.NetworkSettings)
+	desc += fmt.Sprintf("LogPath         : %s\n", container.LogPath)
+	desc += fmt.Sprintf("RestartCount    : %d\n", container.RestartCount)
+	desc += fmt.Sprintf("Driver          : %s\n", container.Driver)
+	desc += fmt.Sprintf("Platform        : %s\n", container.Platform)
+	desc += fmt.Sprintf("ProcessLabel    : %s\n", container.ProcessLabel)
+	desc += fmt.Sprintf("IP              : %s\n", container.NetworkSettings.IPAddress)
 	return desc
 }
 
-func buildImageView(m model) string {
-
-	var s string
-	// truncate
-	shouldTruncate := false
-	imageList := m.images
-	if len(m.images) > 10 {
-		shouldTruncate = true
-		imageList = m.images[:10]
+func buildImageDescShort(id string) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
 	}
+	image, err := client.InspectImage(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-6, "..."))
+	desc += fmt.Sprintf("Created : %s\n", image.Created.Format("2006-01-02 15:04:05"))
+	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
+	desc += fmt.Sprintf("Cmd     : %s\n", strings.Join(image.Config.Cmd, " "))
+	desc += fmt.Sprintf("Volumes : %v\n", formatImageVolumes(image.Config.Volumes))
+	// desc += fmt.Sprintf("Volumes : %v\n", image.Config.Volumes)
+	return desc
+}
 
-	for i, choice := range imageList {
-		cursor := "  " // default cursor
+func buildImageView(m model) (string, string) {
+	var bodyL, bodyR string
+	for i, choice := range m.images {
+		cursor := " " // default cursor
+		check := " "
 		if m.cursor == i {
-			cursor = "👉"
-		}
-		checked := " "
-		if _, ok := m.selected[i]; ok {
-			checked = "x"
+			cursor = "❯"
+			bodyR = buildImageDescShort(choice.id)
 		}
 		name := choice.name
-		if len(name) > 25 {
-			name = name[:25] + "..."
-		}
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, name)
+		bodyL += fmt.Sprintf("%s %s %s", cursor, check, name) + "\n"
 	}
-	// add more images message
-	if shouldTruncate {
-		s += fmt.Sprintf("\n     %d more images... ↓\n", len(m.images)-10)
-	}
-	return bodyLStyle.Render(s)
+	padBodyHeight(&bodyL, len(m.images)+2)
+	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
+
+	// var s string
+	// // truncate
+	// shouldTruncate := false
+	// imageList := m.images
+	// if len(m.images) > 10 {
+	// 	shouldTruncate = true
+	// 	imageList = m.images[:10]
+	// }
+
+	// for i, choice := range imageList {
+	// 	cursor := "  " // default cursor
+	// 	if m.cursor == i {
+	// 		cursor = "👉"
+	// 	}
+	// 	checked := " "
+	// 	if _, ok := m.selected[i]; ok {
+	// 		checked = "x"
+	// 	}
+	// 	name := choice.name
+	// 	if len(name) > 25 {
+	// 		name = name[:25] + "..."
+	// 	}
+	// 	s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, name)
+	// }
+	// // add more images message
+	// if shouldTruncate {
+	// 	s += fmt.Sprintf("\n     %d more images... ↓\n", len(m.images)-10)
+	// }
+	// return bodyLStyle.Render(s)
 }
 
 func buildLogView(m model) string {
@@ -108,8 +171,7 @@ func buildContainerView(m model) (string, string) {
 		check := " "
 		if m.cursor == i {
 			cursor = "❯"
-
-			bodyR = buildContainerDescShort(choice)
+			bodyR = buildContainerDescShort(choice.id)
 		}
 
 		isProcessing := checkProcess(choice.id, m.processes)
@@ -119,7 +181,6 @@ func buildContainerView(m model) (string, string) {
 		}
 		state := stateStyle.Render("●")
 		name := choice.name
-		name = runewidth.Truncate(name, 25, "...")
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
@@ -141,7 +202,7 @@ func (m model) View() string {
 	case pageContainer:
 		bodyL, bodyR = buildContainerView(m)
 	case pageImage:
-		bodyL = buildImageView(m)
+		bodyL, bodyR = buildImageView(m)
 	}
 
 	//  title
