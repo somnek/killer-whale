@@ -218,6 +218,12 @@ func (m model) View() string {
 	final += lipgloss.JoinVertical(lipgloss.Top, body, bottom)
 	appStyle.MarginLeft((m.width - fixedWidth) / 2)
 
+	// 0 containers
+	if len(m.containers) == 0 {
+		body = bodyStyle.Render("No containers found")
+		return title + "\n" + titleStyle.Render(body) + "\n"
+	}
+
 	return title + "\n" + appStyle.Render(final) + "\n" + help
 }
 
