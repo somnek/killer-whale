@@ -28,9 +28,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// containers
 		containers := getContainers()
 		m.containers = containers
+
 		// images
 		images := getImages()
 		m.images = images
+
+		// cursor
+		if m.cursor == -1 {
+			m.cursor = 0
+		}
 
 		// blink switch
 		if m.blinkSwitch == on {

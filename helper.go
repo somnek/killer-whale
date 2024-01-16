@@ -258,7 +258,7 @@ func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	res := actionResult{}
 	for _, c := range targets {
-		go removeContainer(client, c.id)
+		removeContainer(client, c.id)
 		desiredState := "x"
 		addProcess(&m, c.id, desiredState)
 		res.success = append(res.success, c)
@@ -275,7 +275,8 @@ func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	m.logs = logs
 	m.selected = make(map[int]struct{})
-	m.cursor = 0
+	// prevent pointing to an nil index
+	m.cursor = -1
 	return m, nil
 }
 
