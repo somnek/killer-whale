@@ -6,6 +6,10 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+//
+// TODO: handle errors return from docker client instead of assigning to _
+//
+
 func removeContainer(c *docker.Client, id string) {
 	opts := docker.RemoveContainerOptions{
 		ID:    id,

@@ -43,6 +43,7 @@ const (
 	fixedWidth       = 88 // 92
 	fixedBodyLWidth  = 36 // exclude padding
 	fixedBodyRWidth  = 44 // exclude padding
+	maxItemNameWidth = 21
 )
 
 var (

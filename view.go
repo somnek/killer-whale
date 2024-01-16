@@ -8,7 +8,22 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/mattn/go-runewidth"
+	"github.com/muesli/reflow/wrap"
 )
+
+func formatCmd(cmd []string) string {
+	s := wrap.String(strings.Join(cmd, " "), fixedBodyRWidth-10)
+	split := strings.Split(s, "\n")
+
+	if len(split) > 1 {
+		s = split[0] + "\n"
+		for _, line := range split[1:] {
+			s += strings.Repeat(" ", 10) + line + "\n"
+		}
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
 
 func formatImageVolumes(volumeMap map[string]struct{}) string {
 	var s string
@@ -17,7 +32,6 @@ func formatImageVolumes(volumeMap map[string]struct{}) string {
 	}
 	s = strings.TrimSuffix(s, "\n")
 	return s
-
 }
 
 func formatMounts(mounts []docker.Mount) string {
@@ -101,10 +115,11 @@ func buildImageDescShort(id string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-6, "..."))
+	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-10, "..."))
 	desc += fmt.Sprintf("Created : %s\n", image.Created.Format("2006-01-02 15:04:05"))
 	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
-	desc += fmt.Sprintf("Cmd     : %s\n", strings.Join(image.Config.Cmd, " "))
+	// desc += fmt.Sprintf("Cmd     : %v\n", runewidth.Truncate(strings.Join(image.Config.Cmd, " "), fixedBodyRWidth-10, "..."))
+	desc += fmt.Sprintf("Cmd     : %v\n", formatCmd(image.Config.Cmd))
 	desc += fmt.Sprintf("Volumes : %v\n", formatImageVolumes(image.Config.Volumes))
 	return desc
 }
@@ -150,10 +165,13 @@ func buildContainerView(m model) (string, string) {
 		}
 		state := stateStyle.Render("●")
 		name := choice.name
+		name = runewidth.Truncate(name, maxItemNameWidth, "...")
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
-		bodyL += fmt.Sprintf("%s %s %s %s", cursor, check, state, name) + "\n"
+		row := fmt.Sprintf("%s %s %s %s", cursor, check, state, name)
+		padRowWidth(&row)
+		bodyL += row
 	}
 
 	// pad body height
@@ -197,4 +215,12 @@ func padBodyHeight(s *string, itemCount int) {
 	if itemCount < minHeightPerView {
 		*s += strings.Repeat("\n", minHeightPerView-itemCount)
 	}
+}
+
+func padRowWidth(s *string) {
+	sWidth := lipgloss.Width(*s)
+	if sWidth < fixedBodyLWidth-10 {
+		*s = *s + strings.Repeat(" ", (fixedBodyLWidth-10)-sWidth)
+	}
+	*s += "\n"
 }

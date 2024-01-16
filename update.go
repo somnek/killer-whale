@@ -132,14 +132,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.page = pageContainer
 			}
+			m.cursor = 0
 		}
 
 	}
 	return m, nil
 }
-
-/*
-
-
-
- */
