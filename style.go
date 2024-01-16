@@ -92,7 +92,10 @@ var (
 	itemCountStyle = lipgloss.NewStyle().
 			Foreground(frenchBlue).
 			Bold(true)
+
 	spinnerStyle = lipgloss.NewStyle().
 			Foreground(celesBlue).
 			Bold(true)
+
+	helpStyle = lipgloss.NewStyle()
 )

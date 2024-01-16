@@ -119,11 +119,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logs = ""
 
 		case key.Matches(msg, m.keys.Help): // toggle help
-			if m.page != 3 {
-				m.page = 3
-			} else {
-				m.page = 0
-			}
+			m.help.ShowAll = !m.help.ShowAll
 			return m, nil
 
 		case key.Matches(msg, m.keys.Tab): // switch tab

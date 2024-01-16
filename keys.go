@@ -21,15 +21,12 @@ type keyMap struct {
 	Start   key.Binding
 	Pause   key.Binding
 	Unpause key.Binding
-
-	Select key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		k.Help,
 		k.Quit,
-		k.Clear,
 		k.SelectAll,
 		k.Tab,
 	}
@@ -38,16 +35,16 @@ func (k keyMap) ShortHelp() []key.Binding {
 func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{
-			k.Help,
 			k.Quit,
-			k.Clear,
-			k.SelectAll,
 			k.Tab,
+			k.Help,
 		},
 		{
 			k.Up,
 			k.Down,
-			k.Select,
+			k.Toggle,
+			k.Clear,
+			k.SelectAll,
 		},
 		{
 			k.Remove,
@@ -85,7 +82,7 @@ var keys = keyMap{
 	),
 	SelectAll: key.NewBinding(
 		key.WithKeys("A"),
-		key.WithHelp("shift+a", "select all"),
+		key.WithHelp("shift+a", "all"),
 	),
 	Tab: key.NewBinding(
 		key.WithKeys("tab"),

@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -36,6 +37,7 @@ type model struct {
 	// TODO: merge process into Container struct
 	processes map[string]string // map[containerID]desiredState
 	keys      keyMap
+	help      help.Model
 	logs      string
 	page      int
 	width     int
@@ -74,6 +76,10 @@ func initialModel() model {
 	s.Spinner = spinner.Jump
 	s.Style = spinnerStyle
 
+	// help
+	h := help.New()
+	h.Width = fixedWidth
+
 	// processes
 	processes := make(map[string]string)
 	return model{
@@ -84,5 +90,6 @@ func initialModel() model {
 		spinner:    s,
 		page:       pageContainer,
 		keys:       keys,
+		help:       h,
 	}
 }
