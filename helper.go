@@ -48,7 +48,6 @@ func updatePendingProcesses(m model) map[string]string {
 // addProcess add Process to m.processes
 // container Processes are used to control the blinkSwitch
 func addProcess(m *model, id, desiredState string) {
-	logToFile(fmt.Sprintf("addProcess: %s %s", id, desiredState))
 	m.processes[id] = desiredState
 }
 

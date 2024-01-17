@@ -98,4 +98,6 @@ var (
 			Bold(true)
 
 	helpStyle = lipgloss.NewStyle()
+
+	PortMapColStyle = lipgloss.NewStyle().Foreground(paletteA10)
 )

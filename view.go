@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -44,14 +46,60 @@ func formatMounts(mounts []docker.Mount) string {
 	return s
 }
 
-func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
-	var s string
-	for containerPort, hostMachinePorts := range portsMap {
-		s += fmt.Sprintf("%s (container)\n", containerPort)
-		for _, port := range hostMachinePorts {
-			s += fmt.Sprintf("        -> %s:%s (host)\n", port.HostIP, port.HostPort)
-		}
+func getSortedPort(portsMap map[docker.Port][]docker.PortBinding) []docker.Port {
+	l := []docker.Port{}
+	for k := range portsMap {
+		l = append(l, k)
 	}
+
+	sort.Slice(l, func(i, j int) bool {
+		// convert to int before compare
+		iInt, _ := strconv.Atoi(l[i].Port())
+		jInt, _ := strconv.Atoi(l[j].Port())
+		return iInt > jInt
+	})
+	return l
+}
+
+func zfillContainerPort(p docker.Port) string {
+	return fmt.Sprintf("%5s/%s", p.Port(), p.Proto())
+}
+
+func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
+	s := "\n"
+	sortedPorts := getSortedPort(portsMap)
+
+	for _, containerPort := range sortedPorts {
+		// find matching host machine port
+		var portBindings []docker.PortBinding // host machine
+		for k, v := range portsMap {
+			if k.Port() == containerPort.Port() {
+				portBindings = v
+			}
+		}
+
+		var joinedPortBindingStr string
+		if len(portBindings) == 0 {
+			joinedPortBindingStr = "null"
+		}
+
+		for i, bindings := range portBindings {
+			IP, Port := bindings.HostIP, bindings.HostPort
+			joinedPortBindingStr += fmt.Sprintf("%s:%s", IP, Port)
+			// has more than 1 port binding per container port
+			if i > 0 {
+				joinedPortBindingStr += "\n"
+			}
+		}
+		containerPortStr := zfillContainerPort(containerPort)
+		s += fmt.Sprintf("        %s -> %s\n", containerPortStr, joinedPortBindingStr)
+	}
+	// add column (container | hostmachine)
+	if len(sortedPorts) > 0 {
+		// s = "container -> host machine" + s
+		s = fmt.Sprintf("%s -> %s", PortMapColStyle.Render("container"), PortMapCol2Style.Render("host machine")) + s
+	}
+
 	s = strings.TrimSuffix(s, "\n")
 	return s
 }
@@ -71,8 +119,8 @@ func buildContainerDescShort(id string) string {
 	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
 	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
 	desc += fmt.Sprintf("State : %s\n", container.State.String())
-	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
 	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
+	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
 	return desc
 }
 func buildContainerDescFull(id string) string {
@@ -124,7 +172,6 @@ func buildImageDescShort(id string) string {
 	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-10, "..."))
 	desc += fmt.Sprintf("Created : %s\n", image.Created.Format("2006-01-02 15:04:05"))
 	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
-	// desc += fmt.Sprintf("Cmd     : %v\n", runewidth.Truncate(strings.Join(image.Config.Cmd, " "), fixedBodyRWidth-10, "..."))
 	desc += fmt.Sprintf("Cmd     : %v\n", formatCmd(image.Config.Cmd))
 	desc += fmt.Sprintf("Volumes : %v\n", formatImageVolumes(image.Config.Volumes))
 	return desc
@@ -244,7 +291,6 @@ func padHelpWidth(s *string, windowWidth, maxAppWidth int) {
 		}
 	}
 	sWidth := longest
-	logToFile(fmt.Sprintf("sWidth: %d", sWidth))
 
 	if windowWidth > 0 && longest < maxAppWidth-4 {
 		outerPad = (windowWidth - maxAppWidth) / 2
