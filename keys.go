@@ -38,8 +38,6 @@ func (k keyMap) FullHelp() [][]key.Binding {
 			k.Quit,
 			k.Tab,
 			k.Help,
-		},
-		{
 			k.Up,
 			k.Down,
 			k.Toggle,
@@ -94,30 +92,30 @@ var keys = keyMap{
 	),
 	Remove: key.NewBinding(
 		key.WithKeys("X"),
-		key.WithHelp("shift+x", "remove container"),
+		key.WithHelp("shift+x", "remove"),
 	),
 	Restart: key.NewBinding(
 		key.WithKeys("r"),
-		key.WithHelp("r", "restart container"),
+		key.WithHelp("r", "restart"),
 	),
 	Kill: key.NewBinding(
 		key.WithKeys("K"),
-		key.WithHelp("shift+k", "kill container"),
+		key.WithHelp("shift+k", "kill"),
 	),
 	Stop: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "stop container"),
+		key.WithHelp("s", "stop"),
 	),
 	Start: key.NewBinding(
 		key.WithKeys("u"),
-		key.WithHelp("u", "start container"),
+		key.WithHelp("u", "start"),
 	),
 	Pause: key.NewBinding(
 		key.WithKeys("p"),
-		key.WithHelp("p", "pause container"),
+		key.WithHelp("p", "pause"),
 	),
 	Unpause: key.NewBinding(
 		key.WithKeys("P"),
-		key.WithHelp("shift+p", "unpause container"),
+		key.WithHelp("shift+p", "unpause"),
 	),
 }

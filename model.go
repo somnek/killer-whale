@@ -82,7 +82,7 @@ func initialModel() model {
 
 	// help
 	h := help.New()
-	h.Width = fixedWidth
+	h.Width = fullWidth
 
 	// processes
 	processes := make(map[string]string)

@@ -37,13 +37,20 @@ const (
 )
 
 const (
-	lastPage         = 4
-	minHeightPerView = 8  // 6 item
-	maxHeightPerView = 12 // 10 item
-	fixedWidth       = 88 // 92
-	fixedBodyLWidth  = 36 // exclude padding
-	fixedBodyRWidth  = 44 // exclude padding
-	maxItemNameWidth = 21
+	lastPage              = 4
+	minHeightPerView      = 8  // 6 item
+	maxHeightPerView      = 12 // 10 item
+	fullWidth             = 90
+	fixedPadL             = 4
+	fixedPadR             = 4
+	fixedPadM             = 4
+	fixedPadLR            = fixedPadL + fixedPadR  // 8
+	fixedContentWidth     = fullWidth - fixedPadLR // 86
+	maxContainerNameWidth = 22
+	maxImageNameWidth     = 24
+	prefixWidth           = 6
+	fixedBodyLWidth       = prefixWidth + maxContainerNameWidth // 28 exclude padding
+	fixedBodyRWidth       = 46                                  // exclude padding
 )
 
 var (

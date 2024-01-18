@@ -233,7 +233,7 @@ func startAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	if successCount > 0 {
 		logs += fmt.Sprintf(
-			"🚀 Starting %v container(s)\n",
+			"🚀 Start %v container(s)\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
 
@@ -276,7 +276,7 @@ func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 
 	if successCount > 0 {
 		logs += fmt.Sprintf(
-			"🗑️  Removed %v container(s)\n",
+			"🔫 Removed %v container(s)\n",
 			itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
 	}
 

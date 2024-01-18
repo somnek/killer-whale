@@ -15,13 +15,20 @@ import (
 
 // ----------------------------- render utils -----------------------------
 
+func buildEmptyBody(text, title string, width int) string {
+	emptyBody := text
+	padOuterComponent(&emptyBody, width)
+	emptyBody = strings.TrimSuffix(emptyBody, "\n")
+	return fmt.Sprintf("%s\n%s\n", title, emptyBody)
+}
+
 func padBodyHeight(s *string, itemCount int) {
 	if itemCount < minHeightPerView {
 		*s += strings.Repeat("\n", minHeightPerView-itemCount)
 	}
 }
 
-func padHelpWidth(s *string, windowWidth, maxAppWidth int) {
+func padOuterComponent(s *string, windowWidth int) {
 	var outerPad, innerPad, longest int
 
 	// get width of longer help string (fullHelp)
@@ -33,9 +40,9 @@ func padHelpWidth(s *string, windowWidth, maxAppWidth int) {
 	}
 	sWidth := longest
 
-	if windowWidth > 0 && longest < maxAppWidth-4 {
-		outerPad = (windowWidth - maxAppWidth) / 2
-		innerPad = ((maxAppWidth - 4) - sWidth) / 2
+	if windowWidth > 0 {
+		outerPad = (windowWidth - fullWidth) / 2
+		innerPad = (fullWidth - sWidth) / 2
 	}
 
 	var newS string
@@ -45,12 +52,13 @@ func padHelpWidth(s *string, windowWidth, maxAppWidth int) {
 	*s = newS
 }
 
-func padItemWidth(s *string, maxWidth int) {
-	sWidth := lipgloss.Width(*s)
-	if sWidth < maxWidth-10 {
-		*s = *s + strings.Repeat(" ", maxWidth-sWidth)
+func padItemName(name string) string {
+	nameWidth := lipgloss.Width(name)
+	if nameWidth < maxContainerNameWidth {
+		name = name + strings.Repeat(" ", maxContainerNameWidth-nameWidth)
 	}
-	*s += "\n"
+	name += "\n"
+	return name
 }
 
 func formatCmd(cmd []string) string {
@@ -123,9 +131,20 @@ func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 
 	// add column (container | hostmachine)
 	if len(sortedPorts) > 0 {
-		s = fmt.Sprintf("%s -> %s", PortMapColStyle.Render("container"), PortMapColStyle.Render("host machine")) + s
+		s = fmt.Sprintf(
+			"%s -> %s",
+			PortMapColStyle.Render("container"),
+			PortMapColStyle.Render("host machine"),
+		) + s
 	}
 
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+
+func buildTitleView(m model) string {
+	s := "🐳 Killer Whale" + "  "
+	padOuterComponent(&s, m.width)
 	s = strings.TrimSuffix(s, "\n")
 	return s
 }
@@ -135,7 +154,7 @@ func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 func buildLogView(m model) string {
 	var s string
 	s += m.logs
-	logStyle.MarginLeft(((fixedWidth - 4) - lipgloss.Width(s)) / 2)
+	logStyle.MarginLeft((fullWidth - lipgloss.Width(s)) / 2)
 	logStyle.AlignHorizontal(lipgloss.Center)
 	return logStyle.Render(s)
 }
@@ -172,8 +191,8 @@ func buildImageView(m model) (string, string) {
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
+		name = padItemName(name)
 		row := fmt.Sprintf("%s %s %s", cursor, check, name)
-		padItemWidth(&row, fixedBodyLWidth-8)
 		bodyL += row
 	}
 	padBodyHeight(&bodyL, len(m.images)+2)
@@ -193,12 +212,15 @@ func buildContainerDescShort(id string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."))
-	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
-	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
-	desc += fmt.Sprintf("State : %s\n", container.State.String())
-	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
-	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
+	desc := fmt.Sprintf(
+		"ID      : %v\n",
+		runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."),
+	)
+	desc += fmt.Sprintf("Image   : %s\n", container.Config.Image)
+	desc += fmt.Sprintf("Cmd     : %s\n", strings.Join(container.Config.Cmd, " "))
+	desc += fmt.Sprintf("State   : %s\n", container.State.String())
+	desc += fmt.Sprintf("IP      : %s\n", container.NetworkSettings.IPAddress)
+	desc += fmt.Sprintf("Ports   : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
 	return desc
 }
 
@@ -219,12 +241,13 @@ func buildContainerView(m model) (string, string) {
 		}
 		state := stateStyle.Render("●")
 		name := choice.name
-		name = runewidth.Truncate(name, maxItemNameWidth, "...")
+		name = runewidth.Truncate(name, maxContainerNameWidth, "...")
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
+		// pad item name, not width
+		name = padItemName(name)
 		row := fmt.Sprintf("%s %s %s %s", cursor, check, state, name)
-		padItemWidth(&row, fixedBodyLWidth-10)
 		bodyL += row
 	}
 
@@ -249,8 +272,7 @@ func (m model) View() string {
 	}
 
 	//  title
-	title := "🐳 Killer Whale" + "  "
-	titleStyle.MarginLeft((m.width / 2) - (lipgloss.Width(title) / 2))
+	title := buildTitleView(m)
 	title = titleStyle.Render(title)
 
 	// join left + right component
@@ -262,19 +284,17 @@ func (m model) View() string {
 
 	// help
 	help := m.help.View(m.keys)
-	padHelpWidth(&help, m.width, fixedWidth)
+	padOuterComponent(&help, m.width)
 
 	// join title + body + log + help
 	final += lipgloss.JoinVertical(lipgloss.Top, body, bottom)
-	appStyle.MarginLeft((m.width - fixedWidth) / 2)
+	appStyle.MarginLeft((m.width - fullWidth) / 2)
 
 	// 0 containers/ image
 	if len(m.containers) == 0 && m.page == pageContainer {
-		body = bodyStyle.Render("No containers found")
-		return title + "\n" + titleStyle.Render(body) + "\n"
+		return buildEmptyBody("\nNo containers found.", title, m.width)
 	} else if len(m.images) == 0 && m.page == pageImage {
-		body = bodyStyle.Render("No images found")
-		return title + "\n" + titleStyle.Render(body) + "\n"
+		return buildEmptyBody("\nNo images found.", title, m.width)
 	}
 
 	return title + "\n" + appStyle.Render(final) + "\n" + help
