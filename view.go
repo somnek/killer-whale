@@ -166,7 +166,7 @@ func buildImageDescShort(id string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-10, "..."))
+	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-8, "..."))
 	desc += fmt.Sprintf("Created : %s\n", image.Created.Format("2006-01-02 15:04:05"))
 	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
 	desc += fmt.Sprintf("Cmd     : %v\n", formatCmd(image.Config.Cmd))
@@ -187,7 +187,9 @@ func buildImageView(m model) (string, string) {
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
-		bodyL += fmt.Sprintf("%s %s %s", cursor, check, name) + "\n"
+		row := fmt.Sprintf("%s %s %s", cursor, check, name)
+		padItemWidth(&row, fixedBodyLWidth-8)
+		bodyL += row
 	}
 	padBodyHeight(&bodyL, len(m.images)+2)
 	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
@@ -269,7 +271,7 @@ func (m model) View() string {
 	if len(m.containers) == 0 && m.page == pageContainer {
 		body = bodyStyle.Render("No containers found")
 		return title + "\n" + titleStyle.Render(body) + "\n"
-	} else if len(m.containers) == 0 && m.page == pageContainer {
+	} else if len(m.images) == 0 && m.page == pageImage {
 		body = bodyStyle.Render("No images found")
 		return title + "\n" + titleStyle.Render(body) + "\n"
 	}

@@ -75,9 +75,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch m.page {
 		case pageContainer:
-			return handleContainerKeys(m, msg)
+			if getCurrentViewItemCount(m) > 0 {
+				return handleContainerKeys(m, msg)
+			}
+			return handleCommonKeys(&m, msg)
 		case pageImage:
-			return handleImageKeys(m, msg)
+			if getCurrentViewItemCount(m) > 0 {
+				return handleImageKeys(m, msg)
+			}
+			return handleCommonKeys(&m, msg)
 		}
 
 		handleCommonKeys(&m, msg)
@@ -100,6 +106,11 @@ func (img Image) findAssociatedContainersInUse(m model) []Container {
 
 func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+
+	// handle 0 images
+	if getCurrentViewItemCount(m) == 0 {
+		return handleCommonKeys(&m, msg)
+	}
 
 	switch {
 	case key.Matches(msg, m.keys.Remove): // remove
@@ -152,7 +163,7 @@ func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 		m.logs = logs
 		m.selected = make(map[int]struct{})
-		m.cursor = 0
+		m.cursor = -1
 		return m, cmd
 
 	default:
@@ -161,6 +172,11 @@ func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func handleContainerKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// handle 0 images
+	if getCurrentViewItemCount(m) == 0 {
+		return handleCommonKeys(&m, msg)
+	}
+
 	switch {
 	case key.Matches(msg, m.keys.Remove): // remove
 		return removeAndWriteLog(m)
@@ -249,6 +265,7 @@ func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.keys = m.togglePageKey()
 		m.selected = make(map[int]struct{})
 		m.cursor = 0
+		m.logs = ""
 	}
 	return *m, nil
 }
