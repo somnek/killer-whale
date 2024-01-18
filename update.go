@@ -136,9 +136,6 @@ func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				res.failed = append(res.failed, img)
 				res.associatedContainers = containersInUse
 			} else {
-				for _, z := range containersInUse {
-					logToFile(z.state)
-				}
 				go removeImage(client, img.id)
 				desiredState := "x"
 				addProcess(&m, img.id, desiredState)
@@ -172,6 +169,7 @@ func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func handleContainerKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+
 	// handle 0 images
 	if getCurrentViewItemCount(m) == 0 {
 		return handleCommonKeys(&m, msg)
@@ -206,11 +204,26 @@ func handleContainerKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch {
-	case key.Matches(msg, m.keys.SelectAll): // slecet all
-		if len(m.containers) == len(m.selected) {
+	case key.Matches(msg, m.keys.SelectAll): // select all
+		// select/clear based on current page
+		var items []any // container|image
+		switch m.page {
+		case pageContainer:
+			items = make([]any, len(m.containers))
+			for i, container := range m.containers {
+				items[i] = container
+			}
+		case pageImage:
+			items = make([]any, len(m.images))
+			for i, image := range m.images {
+				items[i] = image
+			}
+		}
+
+		if len(items) == len(m.selected) {
 			m.selected = make(map[int]struct{})
 		} else {
-			for i := range m.containers {
+			for i := range items {
 				m.selected[i] = struct{}{}
 			}
 		}

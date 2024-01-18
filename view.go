@@ -13,6 +13,46 @@ import (
 	"github.com/muesli/reflow/wrap"
 )
 
+// ----------------------------- render utils -----------------------------
+
+func padBodyHeight(s *string, itemCount int) {
+	if itemCount < minHeightPerView {
+		*s += strings.Repeat("\n", minHeightPerView-itemCount)
+	}
+}
+
+func padHelpWidth(s *string, windowWidth, maxAppWidth int) {
+	var outerPad, innerPad, longest int
+
+	// get width of longer help string (fullHelp)
+	split := strings.Split(*s, "\n")
+	for _, line := range split {
+		if lipgloss.Width(line) > longest {
+			longest = lipgloss.Width(line)
+		}
+	}
+	sWidth := longest
+
+	if windowWidth > 0 && longest < maxAppWidth-4 {
+		outerPad = (windowWidth - maxAppWidth) / 2
+		innerPad = ((maxAppWidth - 4) - sWidth) / 2
+	}
+
+	var newS string
+	for _, line := range split {
+		newS += strings.Repeat(" ", outerPad+innerPad) + line + "\n"
+	}
+	*s = newS
+}
+
+func padItemWidth(s *string, maxWidth int) {
+	sWidth := lipgloss.Width(*s)
+	if sWidth < maxWidth-10 {
+		*s = *s + strings.Repeat(" ", maxWidth-sWidth)
+	}
+	*s += "\n"
+}
+
 func formatCmd(cmd []string) string {
 	s := wrap.String(strings.Join(cmd, " "), fixedBodyRWidth-10)
 	split := strings.Split(s, "\n")
@@ -31,16 +71,6 @@ func formatImageVolumes(volumeMap map[string]struct{}) string {
 	var s string
 	for vol := range volumeMap {
 		s += fmt.Sprintf("%s\n", vol)
-	}
-	s = strings.TrimSuffix(s, "\n")
-	return s
-}
-
-func formatMounts(mounts []docker.Mount) string {
-	var s string
-	for _, mount := range mounts {
-		s += fmt.Sprintf("(source) %s\n", mount.Source)
-		s += fmt.Sprintf("        (des)    %s\n", mount.Destination)
 	}
 	s = strings.TrimSuffix(s, "\n")
 	return s
@@ -100,62 +130,17 @@ func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 	return s
 }
 
-func buildContainerDescShort(id string) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
-	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
-		ID: id,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."))
-	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
-	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
-	desc += fmt.Sprintf("State : %s\n", container.State.String())
-	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
-	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
-	return desc
+// ----------------------------- log view -----------------------------
+
+func buildLogView(m model) string {
+	var s string
+	s += m.logs
+	logStyle.MarginLeft(((fixedWidth - 4) - lipgloss.Width(s)) / 2)
+	logStyle.AlignHorizontal(lipgloss.Center)
+	return logStyle.Render(s)
 }
 
-func buildContainerDescFull(id string) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
-	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
-		ID: id,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	desc := fmt.Sprintf(
-		"ID              : %v\n",
-		runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."),
-	)
-	desc += fmt.Sprintf("Image           : %s\n", container.Config.Image)
-	desc += fmt.Sprintf("Cmd             : %s\n", strings.Join(container.Config.Cmd, " "))
-	desc += fmt.Sprintf("Created         : %s\n", container.Created.Format("2006-01-02 15:04:05"))
-	desc += fmt.Sprintf("State           : %s\n", container.State.String())
-	desc += fmt.Sprintf(
-		"Ports           : %v\n",
-		formatPortsMapping(container.NetworkSettings.Ports),
-	)
-	desc += fmt.Sprintf("Mounts          : %v\n", formatMounts(container.Mounts))
-	desc += fmt.Sprintf("Labels          : %v\n", container.Config.Labels)
-	desc += fmt.Sprintf("Env             : %v\n", container.Config.Env)
-	desc += fmt.Sprintf("HostConfig      : %v\n", container.HostConfig)
-	desc += fmt.Sprintf("NetworkSettings : %v\n", container.NetworkSettings)
-	desc += fmt.Sprintf("LogPath         : %s\n", container.LogPath)
-	desc += fmt.Sprintf("RestartCount    : %d\n", container.RestartCount)
-	desc += fmt.Sprintf("Driver          : %s\n", container.Driver)
-	desc += fmt.Sprintf("Platform        : %s\n", container.Platform)
-	desc += fmt.Sprintf("ProcessLabel    : %s\n", container.ProcessLabel)
-	desc += fmt.Sprintf("IP              : %s\n", container.NetworkSettings.IPAddress)
-	return desc
-}
+// ----------------------------- image view -----------------------------
 
 func buildImageDescShort(id string) string {
 	client, err := docker.NewClientFromEnv()
@@ -195,12 +180,26 @@ func buildImageView(m model) (string, string) {
 	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
 }
 
-func buildLogView(m model) string {
-	var s string
-	s += m.logs
-	logStyle.MarginLeft(((fixedWidth - 4) - lipgloss.Width(s)) / 2)
-	logStyle.AlignHorizontal(lipgloss.Center)
-	return logStyle.Render(s)
+// ----------------------------- container view -----------------------------
+
+func buildContainerDescShort(id string) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	container, err := client.InspectContainerWithOptions(docker.InspectContainerOptions{
+		ID: id,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	desc := fmt.Sprintf("ID    : %v\n", runewidth.Truncate(container.ID, fixedBodyRWidth-8, "..."))
+	desc += fmt.Sprintf("Image : %s\n", container.Config.Image)
+	desc += fmt.Sprintf("Cmd   : %s\n", strings.Join(container.Config.Cmd, " "))
+	desc += fmt.Sprintf("State : %s\n", container.State.String())
+	desc += fmt.Sprintf("IP    : %s\n", container.NetworkSettings.IPAddress)
+	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
+	return desc
 }
 
 func buildContainerView(m model) (string, string) {
@@ -233,6 +232,8 @@ func buildContainerView(m model) (string, string) {
 	padBodyHeight(&bodyL, len(m.containers)+2)
 	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
 }
+
+// ----------------------------- main view -----------------------------
 
 func (m model) View() string {
 
@@ -277,42 +278,4 @@ func (m model) View() string {
 	}
 
 	return title + "\n" + appStyle.Render(final) + "\n" + help
-}
-
-func padBodyHeight(s *string, itemCount int) {
-	if itemCount < minHeightPerView {
-		*s += strings.Repeat("\n", minHeightPerView-itemCount)
-	}
-}
-
-func padHelpWidth(s *string, windowWidth, maxAppWidth int) {
-	var outerPad, innerPad, longest int
-
-	// get width of longer help string (fullHelp)
-	split := strings.Split(*s, "\n")
-	for _, line := range split {
-		if lipgloss.Width(line) > longest {
-			longest = lipgloss.Width(line)
-		}
-	}
-	sWidth := longest
-
-	if windowWidth > 0 && longest < maxAppWidth-4 {
-		outerPad = (windowWidth - maxAppWidth) / 2
-		innerPad = ((maxAppWidth - 4) - sWidth) / 2
-	}
-
-	var newS string
-	for _, line := range split {
-		newS += strings.Repeat(" ", outerPad+innerPad) + line + "\n"
-	}
-	*s = newS
-}
-
-func padItemWidth(s *string, maxWidth int) {
-	sWidth := lipgloss.Width(*s)
-	if sWidth < maxWidth-10 {
-		*s = *s + strings.Repeat(" ", maxWidth-sWidth)
-	}
-	*s += "\n"
 }
