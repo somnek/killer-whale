@@ -1,16 +1,33 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	docker "github.com/fsouza/go-dockerclient"
 )
+
+func (m model) togglePageKey() keyMap {
+	switch m.page {
+	case pageImage:
+		m.keys.Restart.Unbind()
+		m.keys.Kill.Unbind()
+		m.keys.Stop.Unbind()
+		m.keys.Start.Unbind()
+		m.keys.Pause.Unbind()
+		m.keys.Unpause.Unbind()
+	}
+	return m.keys
+}
 
 func getCurrentViewItemCount(m model) int {
 	var itemCount int
-	if m.page == pageContainer {
+	switch m.page {
+	case pageContainer:
 		itemCount = len(m.containers)
-	} else {
+	case pageImage:
 		itemCount = len(m.images)
 	}
 	return itemCount
@@ -56,87 +73,182 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.keys.Remove): // remove
-			return removeAndWriteLog(m)
+		switch m.page {
+		case pageContainer:
+			return handleContainerKeys(m, msg)
+		case pageImage:
+			return handleImageKeys(m, msg)
+		}
 
-		case key.Matches(msg, m.keys.Restart): // restart
-			return restartAndWriteLog(m)
+		handleCommonKeys(&m, msg)
+	}
 
-		case key.Matches(msg, m.keys.Kill): // kill
-			return killAndWriteLog(m)
+	return m, nil
+}
 
-		case key.Matches(msg, m.keys.Stop): // stop
-			return stopAndWriteLog(m)
+// getContainers return a list of Container that are created using
+// this image
+func (img Image) findAssociatedContainersInUse(m model) []Container {
+	containers := []Container{}
+	for _, c := range m.containers {
+		if c.ancestor == img.name && (c.state == "running" || c.state == "paused") {
+			containers = append(containers, c)
+		}
+	}
+	return containers
+}
 
-		case key.Matches(msg, m.keys.Start): // start
-			return startAndWriteLog(m)
+func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 
-		case key.Matches(msg, m.keys.Pause): // pause
-			return pauseAndWriteLog(m)
+	switch {
+	case key.Matches(msg, m.keys.Remove): // remove
+		client, err := docker.NewClientFromEnv()
+		if err != nil {
+			m.logs += "Failed to create Docker client"
+		}
 
-		case key.Matches(msg, m.keys.Unpause): // unpause
-			return unpauseAndWriteLog(m)
+		targets := []Image{}
+		if len(m.selected) == 0 {
+			targets = append(targets, m.images[m.cursor])
+		} else {
+			for k := range m.selected {
+				targets = append(targets, m.images[k])
+			}
+		}
 
-		case key.Matches(msg, m.keys.SelectAll): // slecet all
-			if len(m.containers) == len(m.selected) {
-				m.selected = make(map[int]struct{})
+		res := actionResultImages{}
+		// for now show 1 dependent erorr at a time
+		for _, img := range targets {
+			containersInUse := img.findAssociatedContainersInUse(m)
+			if len(containersInUse) > 0 {
+				res.failed = append(res.failed, img)
+				res.associatedContainers = containersInUse
 			} else {
-				for i := range m.containers {
-					m.selected[i] = struct{}{}
+				for _, z := range containersInUse {
+					logToFile(z.state)
 				}
+				go removeImage(client, img.id)
+				desiredState := "x"
+				addProcess(&m, img.id, desiredState)
+				res.success = append(res.success, img)
 			}
-			return m, nil
+		}
 
-		case key.Matches(msg, m.keys.Clear): // clear selection
-			m.logs = ""
+		var logs string
+		successCount, failedCount := len(res.success), len(res.failed)
+
+		if successCount > 0 {
+			logs += fmt.Sprintf(
+				"🗑️ Remove %v image(s)\n",
+				itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
+		}
+
+		if failedCount > 0 {
+			logs += fmt.Sprintf(
+				"🚧 Skip removing %v image(s), can only remove image that are not in use...\n",
+				itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+		}
+
+		m.logs = logs
+		m.selected = make(map[int]struct{})
+		m.cursor = 0
+		return m, cmd
+
+	default:
+		return handleCommonKeys(&m, msg)
+	}
+}
+
+func handleContainerKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, m.keys.Remove): // remove
+		return removeAndWriteLog(m)
+
+	case key.Matches(msg, m.keys.Restart): // restart
+		return restartAndWriteLog(m)
+
+	case key.Matches(msg, m.keys.Kill): // kill
+		return killAndWriteLog(m)
+
+	case key.Matches(msg, m.keys.Stop): // stop
+		return stopAndWriteLog(m)
+
+	case key.Matches(msg, m.keys.Start): // start
+		return startAndWriteLog(m)
+
+	case key.Matches(msg, m.keys.Pause): // pause
+		return pauseAndWriteLog(m)
+
+	case key.Matches(msg, m.keys.Unpause): // unpause
+		return unpauseAndWriteLog(m)
+	default:
+		return handleCommonKeys(&m, msg)
+	}
+
+}
+
+func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, m.keys.SelectAll): // slecet all
+		if len(m.containers) == len(m.selected) {
 			m.selected = make(map[int]struct{})
-			return m, nil
-
-		case key.Matches(msg, m.keys.Quit): // quit
-			return m, tea.Quit
-
-		case key.Matches(msg, m.keys.Up): // move cursor up
-			itemCount := getCurrentViewItemCount(m)
-			// increment cursor unless we're at the beginning of the list
-			if m.cursor > 0 {
-				m.cursor--
-			} else {
-				m.cursor = itemCount - 1
+		} else {
+			for i := range m.containers {
+				m.selected[i] = struct{}{}
 			}
+		}
+		return m, nil
 
-		case key.Matches(msg, m.keys.Down): // move cursor down
-			itemCount := getCurrentViewItemCount(m)
+	case key.Matches(msg, m.keys.Clear): // clear selection
+		m.logs = ""
+		m.selected = make(map[int]struct{})
+		return m, nil
 
-			// decrement cursor unless we're at the end of the list
-			if m.cursor < itemCount-1 {
-				m.cursor++
-			} else {
-				m.cursor = 0
-			}
+	case key.Matches(msg, m.keys.Quit): // quit
+		return m, tea.Quit
 
-		case key.Matches(msg, m.keys.Toggle): // toggle selection
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = struct{}{}
-			}
-			m.logs = ""
+	case key.Matches(msg, m.keys.Up): // move cursor up
+		itemCount := getCurrentViewItemCount(*m)
+		// increment cursor unless we're at the beginning of the list
+		if m.cursor > 0 {
+			m.cursor--
+		} else {
+			m.cursor = itemCount - 1
+		}
 
-		case key.Matches(msg, m.keys.Help): // toggle help
-			m.help.ShowAll = !m.help.ShowAll
-			return m, nil
+	case key.Matches(msg, m.keys.Down): // move cursor down
+		itemCount := getCurrentViewItemCount(*m)
 
-		case key.Matches(msg, m.keys.Tab): // switch tab
-			if m.page == pageContainer {
-				m.page = pageImage
-			} else {
-				m.page = pageContainer
-			}
+		// decrement cursor unless we're at the end of the list
+		if m.cursor < itemCount-1 {
+			m.cursor++
+		} else {
 			m.cursor = 0
 		}
 
+	case key.Matches(msg, m.keys.Toggle): // toggle selection
+		_, ok := m.selected[m.cursor]
+		if ok {
+			delete(m.selected, m.cursor)
+		} else {
+			m.selected[m.cursor] = struct{}{}
+		}
+		m.logs = ""
+
+	case key.Matches(msg, m.keys.Help): // toggle help
+		m.help.ShowAll = !m.help.ShowAll
+		return m, nil
+
+	case key.Matches(msg, m.keys.Tab): // switch tab
+		if m.page == pageContainer {
+			m.page = pageImage
+		} else {
+			m.page = pageContainer
+		}
+		m.keys = m.togglePageKey()
+		m.selected = make(map[int]struct{})
+		m.cursor = 0
 	}
-	return m, nil
+	return *m, nil
 }

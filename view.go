@@ -61,10 +61,6 @@ func getSortedPort(portsMap map[docker.Port][]docker.PortBinding) []docker.Port 
 	return l
 }
 
-func zfillContainerPort(p docker.Port) string {
-	return fmt.Sprintf("%5s/%s", p.Port(), p.Proto())
-}
-
 func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 	s := "\n"
 	sortedPorts := getSortedPort(portsMap)
@@ -91,13 +87,13 @@ func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 				joinedPortBindingStr += "\n"
 			}
 		}
-		containerPortStr := zfillContainerPort(containerPort)
+		containerPortStr := fmt.Sprintf("%5s/%s", containerPort.Port(), containerPort.Proto())
 		s += fmt.Sprintf("        %s -> %s\n", containerPortStr, joinedPortBindingStr)
 	}
+
 	// add column (container | hostmachine)
 	if len(sortedPorts) > 0 {
-		// s = "container -> host machine" + s
-		s = fmt.Sprintf("%s -> %s", PortMapColStyle.Render("container"), PortMapCol2Style.Render("host machine")) + s
+		s = fmt.Sprintf("%s -> %s", PortMapColStyle.Render("container"), PortMapColStyle.Render("host machine")) + s
 	}
 
 	s = strings.TrimSuffix(s, "\n")
@@ -123,6 +119,7 @@ func buildContainerDescShort(id string) string {
 	desc += fmt.Sprintf("Ports : %v\n", formatPortsMapping(container.NetworkSettings.Ports))
 	return desc
 }
+
 func buildContainerDescFull(id string) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
@@ -187,6 +184,9 @@ func buildImageView(m model) (string, string) {
 			bodyR = buildImageDescShort(choice.id)
 		}
 		name := choice.name
+		if _, ok := m.selected[i]; ok {
+			check = checkStyle.Render("✔")
+		}
 		bodyL += fmt.Sprintf("%s %s %s", cursor, check, name) + "\n"
 	}
 	padBodyHeight(&bodyL, len(m.images)+2)
@@ -246,7 +246,7 @@ func (m model) View() string {
 	}
 
 	//  title
-	title := "🐳 Docker" + "  "
+	title := "🐳 Killer Whale" + "  "
 	titleStyle.MarginLeft((m.width / 2) - (lipgloss.Width(title) / 2))
 	title = titleStyle.Render(title)
 
@@ -261,13 +261,16 @@ func (m model) View() string {
 	help := m.help.View(m.keys)
 	padHelpWidth(&help, m.width, fixedWidth)
 
-	// joing title + body + log + help
+	// join title + body + log + help
 	final += lipgloss.JoinVertical(lipgloss.Top, body, bottom)
 	appStyle.MarginLeft((m.width - fixedWidth) / 2)
 
-	// 0 containers
-	if len(m.containers) == 0 {
+	// 0 containers/ image
+	if len(m.containers) == 0 && m.page == pageContainer {
 		body = bodyStyle.Render("No containers found")
+		return title + "\n" + titleStyle.Render(body) + "\n"
+	} else if len(m.containers) == 0 && m.page == pageContainer {
+		body = bodyStyle.Render("No images found")
 		return title + "\n" + titleStyle.Render(body) + "\n"
 	}
 

@@ -6,10 +6,32 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-//
-// TODO: handle errors return from docker client instead of assigning to _
-//
+////////////////////////////////////////////
+// TODO: handle errors return from docker
+// client instead of assigning to _
+////////////////////////////////////////////
 
+// ---------------- Image ----------------
+func removeImage(c *docker.Client, id string) {
+	opts := docker.RemoveImageOptions{
+		Force: true,
+	}
+	// just tell em to remove the container that use this image first
+	_ = c.RemoveImageExtended(id, opts)
+}
+
+func listImages(c *docker.Client, showAll bool) []docker.APIImages {
+	opts := docker.ListImagesOptions{
+		All: showAll,
+	}
+	images, err := c.ListImages(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return images
+}
+
+// ---------------- Container ----------------
 func removeContainer(c *docker.Client, id string) {
 	opts := docker.RemoveContainerOptions{
 		ID:    id,
@@ -51,15 +73,4 @@ func listContainers(c *docker.Client, showAll bool) []docker.APIContainers {
 		log.Fatal(err)
 	}
 	return containers
-}
-
-func listImages(c *docker.Client, showAll bool) []docker.APIImages {
-	opts := docker.ListImagesOptions{
-		All: showAll,
-	}
-	images, err := c.ListImages(opts)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return images
 }

@@ -8,9 +8,15 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
-type actionResult struct {
+type actionResultContainers struct {
 	success []Container
 	failed  []Container
+}
+
+type actionResultImages struct {
+	success              []Image
+	failed               []Image
+	associatedContainers []Container
 }
 
 const (
@@ -18,6 +24,8 @@ const (
 	off
 )
 
+// checkProcess check if the container is in m.processes
+// (a.k.a process is in progress)
 func checkProcess(id string, processes map[string]string) bool {
 	if _, ok := processes[id]; ok {
 		return true
@@ -66,7 +74,7 @@ func unpauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		if c.state == "paused" {
 			go unpauseContainer(client, c.id)
@@ -113,7 +121,7 @@ func pauseAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		if c.state == "running" {
 			go pauseContainer(client, c.id)
@@ -160,7 +168,7 @@ func stopAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		if c.state == "running" || c.state == "restarting" {
 			go stopContainer(client, c.id)
@@ -207,7 +215,7 @@ func startAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		if c.state == "exited" || c.state == "created" {
 			go startContainer(client, c.id)
@@ -255,7 +263,7 @@ func removeAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		removeContainer(client, c.id)
 		desiredState := "x"
@@ -294,7 +302,7 @@ func restartAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		if c.state == "running" {
 			go restartContainer(client, c.id)
@@ -341,7 +349,7 @@ func killAndWriteLog(m model) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	res := actionResult{}
+	res := actionResultContainers{}
 	for _, c := range targets {
 		if c.state == "running" {
 			go killContainer(client, c.id)
