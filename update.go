@@ -18,6 +18,8 @@ func (m model) togglePageKey() keyMap {
 		m.keys.Start.Unbind()
 		m.keys.Pause.Unbind()
 		m.keys.Unpause.Unbind()
+	case pageContainer:
+		m.keys = keys // keys is default (container)
 	}
 	return m.keys
 }

@@ -52,10 +52,10 @@ func padOuterComponent(s *string, windowWidth int) {
 	*s = newS
 }
 
-func padItemName(name string) string {
+func padItemName(name string, maxLen int) string {
 	nameWidth := lipgloss.Width(name)
-	if nameWidth < maxContainerNameWidth {
-		name = name + strings.Repeat(" ", maxContainerNameWidth-nameWidth)
+	if nameWidth < maxLen {
+		name = name + strings.Repeat(" ", maxLen-nameWidth)
 	}
 	name += "\n"
 	return name
@@ -191,7 +191,7 @@ func buildImageView(m model) (string, string) {
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
-		name = padItemName(name)
+		name = padItemName(name, maxImageNameWidth)
 		row := fmt.Sprintf("%s %s %s", cursor, check, name)
 		bodyL += row
 	}
@@ -245,8 +245,7 @@ func buildContainerView(m model) (string, string) {
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
-		// pad item name, not width
-		name = padItemName(name)
+		name = padItemName(name, maxContainerNameWidth)
 		row := fmt.Sprintf("%s %s %s %s", cursor, check, state, name)
 		bodyL += row
 	}

@@ -40,9 +40,13 @@ func (k keyMap) FullHelp() [][]key.Binding {
 			k.Help,
 			k.Up,
 			k.Down,
+		},
+		{
 			k.Toggle,
 			k.Clear,
 			k.SelectAll,
+			k.Pause,
+			k.Unpause,
 		},
 		{
 			k.Remove,
@@ -50,8 +54,6 @@ func (k keyMap) FullHelp() [][]key.Binding {
 			k.Kill,
 			k.Stop,
 			k.Start,
-			k.Pause,
-			k.Unpause,
 		},
 	}
 }
