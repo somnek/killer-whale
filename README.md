@@ -1,10 +1,10 @@
 # killer-whale 🐳
 
-<p align="center">
-  <img style="width:300px" src="https://github.com/somnek/killer-whale/blob/main/src/logo.png?raw=true"/>
-</p>
-
 Killer Whale is a Docker client that runs in your terminal. It provides an intuitive, easy-to-use interface for managing your Docker containers.
+
+<p align="center">
+  <img style="width:600px" src="./assets/screenshot.png"/>
+</p>
 
 ## Features
 
