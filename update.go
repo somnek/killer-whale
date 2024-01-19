@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	docker "github.com/fsouza/go-dockerclient"
 )
@@ -39,9 +38,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 
-	case spinner.TickMsg:
-		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
+	// case spinner.TickMsg:
+	// 	m.spinner, cmd = m.spinner.Update(msg)
+	// 	return m, cmd
 
 	case TickMsg:
 		// containers
@@ -91,7 +90,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		handleCommonKeys(&m, msg)
 	}
 
-	return m, nil
+	return m, cmd
 }
 
 // getContainers return a list of Container that are created using

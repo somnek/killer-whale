@@ -258,7 +258,6 @@ func buildContainerView(m model) (string, string) {
 // ----------------------------- main view -----------------------------
 
 func (m model) View() string {
-
 	var final string
 	var bodyL, bodyR, body, bottom string
 

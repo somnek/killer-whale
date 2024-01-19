@@ -78,7 +78,7 @@ var keys = keyMap{
 	),
 	Clear: key.NewBinding(
 		key.WithKeys("esc"),
-		key.WithHelp("esc", "clear selection"),
+		key.WithHelp("esc", "clear"),
 	),
 	SelectAll: key.NewBinding(
 		key.WithKeys("A"),
