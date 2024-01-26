@@ -413,3 +413,21 @@ func getImages() []Image {
 	}
 	return images
 }
+
+// ---------------- Volume ----------------
+func getVolumes() []Volume {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatalf("failed to create Docker clinet: %v", err)
+	}
+
+	volumes := []Volume{}
+	for _, v := range listVolumes(client) {
+		volume := Volume{
+			name:       v.Name,
+			mountPoint: v.Mountpoint,
+		}
+		volumes = append(volumes, volume)
+	}
+	return volumes
+}

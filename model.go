@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -16,23 +15,29 @@ type Container struct {
 	desc     string
 }
 
+type Volume struct {
+	name       string
+	mountPoint string
+}
+
 type Image struct {
-	name string
 	id   string
+	name string
 }
 
 const (
 	pageContainer int = iota
 	pageImage
+	pageVolume
 	pageLog
 )
 
 type model struct {
 	containers  []Container
 	images      []Image
+	volumes     []Volume
 	cursor      int
 	selected    map[int]struct{}
-	spinner     spinner.Model
 	blinkSwitch int
 	// TODO: merge process into Container struct
 	processes map[string]string // map[containerID]desiredState
@@ -61,7 +66,7 @@ func doTick() tea.Cmd {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.Batch(doTick(), m.spinner.Tick)
+	return doTick()
 }
 
 func initialModel() model {
@@ -69,16 +74,12 @@ func initialModel() model {
 	// containers
 	containers := getContainers()
 	images := getImages()
+	volumes := getVolumes()
 
 	// 0 container scenario
 	if len(containers) > 0 {
 		containers[cursor].desc = buildContainerDescShort(containers[cursor].id)
 	}
-
-	// spinner
-	s := spinner.New()
-	s.Spinner = spinner.Jump
-	s.Style = spinnerStyle
 
 	// help
 	h := help.New()
@@ -89,9 +90,9 @@ func initialModel() model {
 	return model{
 		containers: containers,
 		images:     images,
+		volumes:    volumes,
 		selected:   make(map[int]struct{}),
 		processes:  processes,
-		spinner:    s,
 		page:       pageContainer,
 		keys:       keys,
 		help:       h,

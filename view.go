@@ -159,6 +159,16 @@ func buildLogView(m model) string {
 	return logStyle.Render(s)
 }
 
+// ----------------------------- volume view -----------------------------
+
+func buildVolumeView(m model) (string, string) {
+	var bodyL string
+	for _, choice := range m.volumes {
+		bodyL += choice.name + "\n"
+	}
+	return bodyLStyle.Render(bodyL), "abc"
+}
+
 // ----------------------------- image view -----------------------------
 
 func buildImageDescShort(id string) string {
@@ -267,6 +277,8 @@ func (m model) View() string {
 		bodyL, bodyR = buildContainerView(m)
 	case pageImage:
 		bodyL, bodyR = buildImageView(m)
+	case pageVolume:
+		bodyL, bodyR = buildVolumeView(m)
 	}
 
 	//  title

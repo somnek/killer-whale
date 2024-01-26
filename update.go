@@ -9,6 +9,8 @@ import (
 )
 
 func (m model) togglePageKey() keyMap {
+	m.keys = keys // keys is default (container)
+
 	switch m.page {
 	case pageImage:
 		m.keys.Restart.Unbind()
@@ -17,8 +19,14 @@ func (m model) togglePageKey() keyMap {
 		m.keys.Start.Unbind()
 		m.keys.Pause.Unbind()
 		m.keys.Unpause.Unbind()
+	case pageVolume:
+		m.keys.Restart.Unbind()
+		m.keys.Kill.Unbind()
+		m.keys.Stop.Unbind()
+		m.keys.Start.Unbind()
+		m.keys.Pause.Unbind()
+		m.keys.Unpause.Unbind()
 	case pageContainer:
-		m.keys = keys // keys is default (container)
 	}
 	return m.keys
 }
@@ -37,10 +45,6 @@ func getCurrentViewItemCount(m model) int {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-
-	// case spinner.TickMsg:
-	// 	m.spinner, cmd = m.spinner.Update(msg)
-	// 	return m, cmd
 
 	case TickMsg:
 		// containers
@@ -85,6 +89,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return handleImageKeys(m, msg)
 			}
 			return handleCommonKeys(&m, msg)
+		case pageVolume:
+			if getCurrentViewItemCount(m) > 0 {
+				return handleVolumeKeys(m, msg)
+			}
+			return handleCommonKeys(&m, msg)
 		}
 
 		handleCommonKeys(&m, msg)
@@ -103,6 +112,24 @@ func (img Image) findAssociatedContainersInUse(m model) []Container {
 		}
 	}
 	return containers
+}
+
+func handleVolumeKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	// handle 0 volumes
+	if getCurrentViewItemCount(m) == 0 {
+		return handleCommonKeys(&m, msg)
+	}
+
+	switch {
+	case key.Matches(msg, m.keys.Remove): // remove
+		// TODO: remove
+		return m, cmd
+
+	default:
+		return handleCommonKeys(&m, msg)
+	}
 }
 
 func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -269,6 +296,24 @@ func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Help): // toggle help
 		m.help.ShowAll = !m.help.ShowAll
 		return m, nil
+
+	case key.Matches(msg, m.keys.num1): // page 1: containers
+		if m.page != pageContainer {
+			m.page = pageContainer
+		}
+		m.keys = m.togglePageKey()
+
+	case key.Matches(msg, m.keys.num2): // page 2: images
+		if m.page != pageImage {
+			m.page = pageImage
+		}
+		m.keys = m.togglePageKey()
+
+	case key.Matches(msg, m.keys.num3): // page 3: volumes
+		if m.page != pageVolume {
+			m.page = pageVolume
+		}
+		m.keys = m.togglePageKey()
 
 	case key.Matches(msg, m.keys.Tab): // switch tab
 		if m.page == pageContainer {

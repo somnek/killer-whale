@@ -12,6 +12,9 @@ type keyMap struct {
 	Clear     key.Binding
 	SelectAll key.Binding
 	Tab       key.Binding
+	num1      key.Binding
+	num2      key.Binding
+	num3      key.Binding
 	Toggle    key.Binding
 
 	Remove  key.Binding
@@ -87,6 +90,18 @@ var keys = keyMap{
 	Tab: key.NewBinding(
 		key.WithKeys("tab"),
 		key.WithHelp("tab", "switch page"),
+	),
+	num1: key.NewBinding(
+		key.WithKeys("1"),
+		key.WithHelp("1", "Containers Page"),
+	),
+	num2: key.NewBinding(
+		key.WithKeys("2"),
+		key.WithHelp("2", "Images Page"),
+	),
+	num3: key.NewBinding(
+		key.WithKeys("3"),
+		key.WithHelp("3", "Volumes Page"),
 	),
 	Toggle: key.NewBinding(
 		key.WithKeys(" ", "enter"),

@@ -11,6 +11,24 @@ import (
 // client instead of assigning to _
 ////////////////////////////////////////////
 
+// ---------------- Volume ----------------
+func removeVolume(c *docker.Client, id string) {
+	opts := docker.RemoveVolumeOptions{
+		Name:  id,
+		Force: true,
+	}
+	_ = c.RemoveVolumeWithOptions(opts)
+}
+
+func listVolumes(c *docker.Client) []docker.Volume {
+	opts := docker.ListVolumesOptions{}
+	volumes, err := c.ListVolumes(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return volumes
+}
+
 // ---------------- Image ----------------
 func removeImage(c *docker.Client, id string) {
 	opts := docker.RemoveImageOptions{
