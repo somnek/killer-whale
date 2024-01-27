@@ -160,16 +160,56 @@ func buildLogView(m model) string {
 }
 
 // ----------------------------- volume view -----------------------------
+func formatVolumeMountPoint(mp string) string {
+	s := wrap.String(mp, fixedBodyRWidth-10)
+	split := strings.Split(s, "\n")
+	if len(split) > 1 {
+		s = split[0] + "\n"
+		for _, line := range split[1:] {
+			s += strings.Repeat(" ", 13) + line + "\n"
+		}
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+func formatVolumeName(name string) string {
+	s := wrap.String(name, fixedBodyRWidth-10)
+	split := strings.Split(s, "\n")
+	if len(split) > 1 {
+		s = split[0] + "\n"
+		for _, line := range split[1:] {
+			s += strings.Repeat(" ", 13) + line + "\n"
+		}
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+
+func buildVolumeDescShort(name string) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	volume, err := client.InspectVolume(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var desc string
+	desc += fmt.Sprintf("MountPoint : %s\n", formatVolumeMountPoint(volume.Mountpoint))
+	desc += fmt.Sprintf("Name       : %s\n", formatVolumeName(volume.Name))
+	return desc
+}
 
 func buildVolumeView(m model) (string, string) {
-	var bodyL string
+	var bodyL, bodyR string
 	for i, choice := range m.volumes {
 		cursor := " "
 		check := " "
 		if m.cursor == i {
 			cursor = "❯"
+			bodyR = buildVolumeDescShort(choice.name)
 		}
-		name := runewidth.Truncate(choice.name, fixedBodyRWidth-8, "...")
+		name := runewidth.Truncate(choice.name, maxImageNameWidth, "")
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
@@ -177,7 +217,7 @@ func buildVolumeView(m model) (string, string) {
 		bodyL += row + "\n"
 	}
 
-	return bodyLStyle.Render(bodyL), "abc"
+	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
 }
 
 // ----------------------------- image view -----------------------------
