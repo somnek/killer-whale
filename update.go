@@ -305,33 +305,30 @@ func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case key.Matches(msg, m.keys.num1): // page 1: containers
-		if m.page != pageContainer {
-			m.page = pageContainer
-		}
-		m.keys = m.togglePageKey()
+		m.setPage(pageContainer)
 
 	case key.Matches(msg, m.keys.num2): // page 2: images
-		if m.page != pageImage {
-			m.page = pageImage
-		}
-		m.keys = m.togglePageKey()
+		m.setPage(pageImage)
 
 	case key.Matches(msg, m.keys.num3): // page 3: volumes
-		if m.page != pageVolume {
-			m.page = pageVolume
-		}
-		m.keys = m.togglePageKey()
+		m.setPage(pageVolume)
 
 	case key.Matches(msg, m.keys.Tab): // switch tab
 		if m.page == pageContainer {
-			m.page = pageImage
+			m.setPage(pageImage)
 		} else {
-			m.page = pageContainer
+			m.setPage(pageContainer)
 		}
-		m.keys = m.togglePageKey()
-		m.selected = make(map[int]struct{})
-		m.cursor = 0
-		m.logs = ""
 	}
 	return *m, nil
+}
+
+func (m *model) setPage(targetPage int) {
+	if m.page != targetPage {
+		m.page = targetPage
+		m.logs = ""
+		m.cursor = 0
+		m.selected = make(map[int]struct{})
+		m.keys = m.togglePageKey()
+	}
 }
