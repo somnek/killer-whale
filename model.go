@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
+	docker "github.com/fsouza/go-dockerclient"
 )
 
 type Container struct {
@@ -13,6 +14,9 @@ type Container struct {
 	id       string
 	ancestor string
 	desc     string
+	cmd      string
+	ip       string
+	ports    []docker.PortBinding
 }
 
 type Volume struct {
@@ -71,12 +75,13 @@ func (m model) Init() tea.Cmd {
 
 func initialModel() model {
 	cursor := 0
+
 	// containers
 	containers := getContainers()
 	images := getImages()
 	volumes := getVolumes()
 
-	// 0 container scenario
+	// descriptions of container at cursor
 	if len(containers) > 0 {
 		containers[cursor].desc = buildContainerDescShort(containers[cursor].id)
 	}
@@ -88,6 +93,7 @@ func initialModel() model {
 	// processes
 	processes := make(map[string]string)
 	return model{
+		cursor:     0,
 		containers: containers,
 		images:     images,
 		volumes:    volumes,

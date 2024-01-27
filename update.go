@@ -38,6 +38,8 @@ func getCurrentViewItemCount(m model) int {
 		itemCount = len(m.containers)
 	case pageImage:
 		itemCount = len(m.images)
+	case pageVolume:
+		itemCount = len(m.volumes)
 	}
 	return itemCount
 }
@@ -245,6 +247,11 @@ func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			items = make([]any, len(m.images))
 			for i, image := range m.images {
 				items[i] = image
+			}
+		case pageVolume:
+			items = make([]any, len(m.volumes))
+			for i, volume := range m.volumes {
+				items[i] = volume
 			}
 		}
 

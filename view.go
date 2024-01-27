@@ -126,7 +126,7 @@ func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 			}
 		}
 		containerPortStr := fmt.Sprintf("%5s/%s", containerPort.Port(), containerPort.Proto())
-		s += fmt.Sprintf("        %s -> %s\n", containerPortStr, joinedPortBindingStr)
+		s += fmt.Sprintf("          %s -> %s\n", containerPortStr, joinedPortBindingStr)
 	}
 
 	// add column (container | hostmachine)
@@ -163,9 +163,20 @@ func buildLogView(m model) string {
 
 func buildVolumeView(m model) (string, string) {
 	var bodyL string
-	for _, choice := range m.volumes {
-		bodyL += choice.name + "\n"
+	for i, choice := range m.volumes {
+		cursor := " "
+		check := " "
+		if m.cursor == i {
+			cursor = "❯"
+		}
+		name := runewidth.Truncate(choice.name, fixedBodyRWidth-8, "...")
+		if _, ok := m.selected[i]; ok {
+			check = checkStyle.Render("✔")
+		}
+		row := fmt.Sprintf("%s %s %s", cursor, check, name)
+		bodyL += row + "\n"
 	}
+
 	return bodyLStyle.Render(bodyL), "abc"
 }
 
@@ -249,7 +260,8 @@ func buildContainerView(m model) (string, string) {
 		if isProcessing && m.blinkSwitch == on {
 			stateStyle = stateStyle.Copy().Foreground(pitchBlack)
 		}
-		state := stateStyle.Render("●")
+		// state := stateStyle.Render("●")
+		state := stateStyle.Render("❖")
 		name := choice.name
 		name = runewidth.Truncate(name, maxContainerNameWidth, "...")
 		if _, ok := m.selected[i]; ok {

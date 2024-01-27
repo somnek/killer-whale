@@ -390,7 +390,12 @@ func getContainers() []Container {
 	for _, c := range listContainers(client, true) {
 		name := c.Names[0][1:]
 		status := c.State
-		c := Container{name: name, state: status, id: c.ID, ancestor: c.Image}
+		c := Container{
+			name:     name,
+			state:    status,
+			id:       c.ID,
+			ancestor: c.Image,
+		}
 		containers = append(containers, c)
 	}
 	return containers
