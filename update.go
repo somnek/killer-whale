@@ -57,6 +57,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		images := getImages()
 		m.images = images
 
+		// volumes
+		volumes := getVolumes()
+		m.volumes = volumes
+
 		// cursor
 		if m.cursor == -1 {
 			m.cursor = 0

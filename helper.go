@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sort"
 
 	tea "github.com/charmbracelet/bubbletea"
 	docker "github.com/fsouza/go-dockerclient"
@@ -420,6 +421,18 @@ func getImages() []Image {
 }
 
 // ---------------- Volume ----------------
+func filterContainersByVolume(c *docker.Client, volName string) []docker.APIContainers {
+	opts := docker.ListContainersOptions{
+		All: true,
+		Filters: map[string][]string{
+			"volume": {volName},
+		},
+	}
+	// TODO: handle error
+	containers, _ := c.ListContainers(opts)
+	return containers
+}
+
 func getVolumes() []Volume {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {
@@ -427,12 +440,31 @@ func getVolumes() []Volume {
 	}
 
 	volumes := []Volume{}
+
 	for _, v := range listVolumes(client) {
+		// find containers using the volume
+		containers := filterContainersByVolume(client, v.Name)
+
 		volume := Volume{
 			name:       v.Name,
 			mountPoint: v.Mountpoint,
+			containers: containers,
+			createdAt:  v.CreatedAt,
 		}
-		volumes = append(volumes, volume)
+
+		volumes = append([]Volume{volume}, volumes...)
+
 	}
+
+	// sort: show newest volume at the top
+	sort.Slice(volumes, func(i, j int) bool {
+		vi, vj := volumes[i], volumes[j]
+		// sort by volume name if vi & vj has the same createdAt
+		if vi.createdAt.Equal(vj.createdAt) {
+			return vi.name < vj.name
+		}
+		return volumes[i].createdAt.After(volumes[j].createdAt)
+	})
+
 	return volumes
 }

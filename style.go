@@ -94,6 +94,7 @@ var (
 
 	PortMapColStyle = lipgloss.NewStyle().Foreground(paletteA10)
 
-	inUseStyleTrue  = lipgloss.NewStyle().Foreground(green)
-	inUseStyleFalse = lipgloss.NewStyle().Foreground(paletteA2)
+	inUseStyleTrue       = lipgloss.NewStyle().Foreground(green)
+	inUseStyleFalse      = lipgloss.NewStyle().Foreground(paletteA2)
+	volumeItemInUseStyle = lipgloss.NewStyle().Foreground(paletteA7)
 )

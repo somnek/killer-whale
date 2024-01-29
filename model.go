@@ -14,14 +14,13 @@ type Container struct {
 	id       string
 	ancestor string
 	desc     string
-	cmd      string
-	ip       string
-	ports    []docker.PortBinding
 }
 
 type Volume struct {
 	name       string
 	mountPoint string
+	containers []docker.APIContainers
+	createdAt  time.Time
 }
 
 type Image struct {

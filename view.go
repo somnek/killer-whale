@@ -116,40 +116,28 @@ func formatVolumeName(name string) string {
 	return s
 }
 
-func buildVolumeDescShort(name string) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
-	volume, err := client.InspectVolume(name)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// find containers that using this volume
-	containers, err := client.ListContainers(docker.ListContainersOptions{
-		All:     true,
-		Filters: map[string][]string{"volume": {volume.Name}},
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
+func buildVolumeDescShort(volume Volume) string {
+	name := volume.name
+	createdAt := volume.createdAt
+	containers := volume.containers
+	mountPoint := volume.mountPoint
 
 	// get first element from result
-	container := "null"
-
+	// TODO: display list of containers, might have >1 container per volume
 	var inUse bool
+	containerName := "null"
+
 	if len(containers) > 0 {
 		inUse = true
-		container = containers[0].Names[0][1:]
+		containerName = containers[0].Names[0][1:]
 	}
 
 	var desc string
-	desc += fmt.Sprintf("Mount   : %s\n", formatVolumeMountPoint(volume.Mountpoint))
-	desc += fmt.Sprintf("Name    : %s\n", formatVolumeName(volume.Name))
+	desc += fmt.Sprintf("Created : %s\n", createdAt)
+	desc += fmt.Sprintf("Mount   : %s\n", formatVolumeMountPoint(mountPoint))
+	desc += fmt.Sprintf("Name    : %s\n", formatVolumeName(name))
 	desc += fmt.Sprintf("In Use  : %v\n", formatVolumeInUse(inUse))
-	desc += fmt.Sprintf("Use by  : %s\n", container)
+	desc += fmt.Sprintf("Use by  : %s\n", containerName)
 
 	return desc
 }
@@ -161,9 +149,14 @@ func buildVolumeView(m model) (string, string) {
 		check := " "
 		if m.cursor == i {
 			cursor = "❯"
-			bodyR = buildVolumeDescShort(choice.name)
+			bodyR = buildVolumeDescShort(choice)
 		}
+
 		name := runewidth.Truncate(choice.name, maxImageNameWidth, "")
+		if len(choice.containers) > 0 {
+			name = volumeItemInUseStyle.Render(name)
+		}
+
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
 		}
