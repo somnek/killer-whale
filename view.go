@@ -61,6 +61,121 @@ func padItemName(name string, maxLen int) string {
 	return name
 }
 
+func buildTitleView(m model) string {
+	s := "🐳 Killer Whale" + "  "
+	padOuterComponent(&s, m.width)
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+
+// ----------------------------- log view -----------------------------
+
+func buildLogView(m model) string {
+	var s string
+	s += m.logs
+	logStyle.MarginLeft((fullWidth - lipgloss.Width(s)) / 2)
+	logStyle.AlignHorizontal(lipgloss.Center)
+	return logStyle.Render(s)
+}
+
+// ----------------------------- volume view -----------------------------
+func formatVolumeMountPoint(mp string) string {
+	s := wrap.String(mp, fixedBodyRWidth-8)
+	split := strings.Split(s, "\n")
+	if len(split) > 1 {
+		s = split[0] + "\n"
+		for _, line := range split[1:] {
+			s += strings.Repeat(" ", 10) + line + "\n"
+		}
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+func formatVolumeInUse(b bool) string {
+	s := fmt.Sprintf("%v", b)
+	var style lipgloss.Style
+
+	if b {
+		style = inUseStyleTrue
+	} else {
+		style = inUseStyleFalse
+	}
+	return style.Render(s)
+}
+
+func formatVolumeName(name string) string {
+	s := wrap.String(name, fixedBodyRWidth-8)
+	split := strings.Split(s, "\n")
+	if len(split) > 1 {
+		s = split[0] + "\n"
+		for _, line := range split[1:] {
+			s += strings.Repeat(" ", 10) + line + "\n"
+		}
+	}
+	s = strings.TrimSuffix(s, "\n")
+	return s
+}
+
+func buildVolumeDescShort(name string) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	volume, err := client.InspectVolume(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// find containers that using this volume
+	containers, err := client.ListContainers(docker.ListContainersOptions{
+		All:     true,
+		Filters: map[string][]string{"volume": {volume.Name}},
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// get first element from result
+	container := "null"
+
+	var inUse bool
+	if len(containers) > 0 {
+		inUse = true
+		container = containers[0].Names[0][1:]
+	}
+
+	var desc string
+	desc += fmt.Sprintf("Mount   : %s\n", formatVolumeMountPoint(volume.Mountpoint))
+	desc += fmt.Sprintf("Name    : %s\n", formatVolumeName(volume.Name))
+	desc += fmt.Sprintf("In Use  : %v\n", formatVolumeInUse(inUse))
+	desc += fmt.Sprintf("Use by  : %s\n", container)
+
+	return desc
+}
+
+func buildVolumeView(m model) (string, string) {
+	var bodyL, bodyR string
+	for i, choice := range m.volumes {
+		cursor := " "
+		check := " "
+		if m.cursor == i {
+			cursor = "❯"
+			bodyR = buildVolumeDescShort(choice.name)
+		}
+		name := runewidth.Truncate(choice.name, maxImageNameWidth, "")
+		if _, ok := m.selected[i]; ok {
+			check = checkStyle.Render("✔")
+		}
+		row := fmt.Sprintf("%s %s %s", cursor, check, name)
+		bodyL += row + "\n"
+	}
+
+	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
+}
+
+// ----------------------------- image view -----------------------------
+
 func formatCmd(cmd []string) string {
 	s := wrap.String(strings.Join(cmd, " "), fixedBodyRWidth-10)
 	split := strings.Split(s, "\n")
@@ -83,6 +198,46 @@ func formatImageVolumes(volumeMap map[string]struct{}) string {
 	s = strings.TrimSuffix(s, "\n")
 	return s
 }
+
+func buildImageDescShort(id string) string {
+	client, err := docker.NewClientFromEnv()
+	if err != nil {
+		log.Fatal(err)
+	}
+	image, err := client.InspectImage(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-8, "..."))
+	desc += fmt.Sprintf("Created : %s\n", image.Created.Format("2006-01-02 15:04:05"))
+	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
+	desc += fmt.Sprintf("Cmd     : %v\n", formatCmd(image.Config.Cmd))
+	desc += fmt.Sprintf("Volumes : %v\n", formatImageVolumes(image.Config.Volumes))
+	return desc
+}
+
+func buildImageView(m model) (string, string) {
+	var bodyL, bodyR string
+	for i, choice := range m.images {
+		cursor := " " // default cursor
+		check := " "
+		if m.cursor == i {
+			cursor = "❯"
+			bodyR = buildImageDescShort(choice.id)
+		}
+		name := choice.name
+		if _, ok := m.selected[i]; ok {
+			check = checkStyle.Render("✔")
+		}
+		name = padItemName(name, maxImageNameWidth)
+		row := fmt.Sprintf("%s %s %s", cursor, check, name)
+		bodyL += row
+	}
+	padBodyHeight(&bodyL, len(m.images)+2)
+	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
+}
+
+// ----------------------------- container view -----------------------------
 
 func getSortedPort(portsMap map[docker.Port][]docker.PortBinding) []docker.Port {
 	l := []docker.Port{}
@@ -141,127 +296,6 @@ func formatPortsMapping(portsMap map[docker.Port][]docker.PortBinding) string {
 	s = strings.TrimSuffix(s, "\n")
 	return s
 }
-
-func buildTitleView(m model) string {
-	s := "🐳 Killer Whale" + "  "
-	padOuterComponent(&s, m.width)
-	s = strings.TrimSuffix(s, "\n")
-	return s
-}
-
-// ----------------------------- log view -----------------------------
-
-func buildLogView(m model) string {
-	var s string
-	s += m.logs
-	logStyle.MarginLeft((fullWidth - lipgloss.Width(s)) / 2)
-	logStyle.AlignHorizontal(lipgloss.Center)
-	return logStyle.Render(s)
-}
-
-// ----------------------------- volume view -----------------------------
-func formatVolumeMountPoint(mp string) string {
-	s := wrap.String(mp, fixedBodyRWidth-10)
-	split := strings.Split(s, "\n")
-	if len(split) > 1 {
-		s = split[0] + "\n"
-		for _, line := range split[1:] {
-			s += strings.Repeat(" ", 13) + line + "\n"
-		}
-	}
-	s = strings.TrimSuffix(s, "\n")
-	return s
-}
-func formatVolumeName(name string) string {
-	s := wrap.String(name, fixedBodyRWidth-10)
-	split := strings.Split(s, "\n")
-	if len(split) > 1 {
-		s = split[0] + "\n"
-		for _, line := range split[1:] {
-			s += strings.Repeat(" ", 13) + line + "\n"
-		}
-	}
-	s = strings.TrimSuffix(s, "\n")
-	return s
-}
-
-func buildVolumeDescShort(name string) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
-	volume, err := client.InspectVolume(name)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var desc string
-	desc += fmt.Sprintf("MountPoint : %s\n", formatVolumeMountPoint(volume.Mountpoint))
-	desc += fmt.Sprintf("Name       : %s\n", formatVolumeName(volume.Name))
-	return desc
-}
-
-func buildVolumeView(m model) (string, string) {
-	var bodyL, bodyR string
-	for i, choice := range m.volumes {
-		cursor := " "
-		check := " "
-		if m.cursor == i {
-			cursor = "❯"
-			bodyR = buildVolumeDescShort(choice.name)
-		}
-		name := runewidth.Truncate(choice.name, maxImageNameWidth, "")
-		if _, ok := m.selected[i]; ok {
-			check = checkStyle.Render("✔")
-		}
-		row := fmt.Sprintf("%s %s %s", cursor, check, name)
-		bodyL += row + "\n"
-	}
-
-	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
-}
-
-// ----------------------------- image view -----------------------------
-
-func buildImageDescShort(id string) string {
-	client, err := docker.NewClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
-	image, err := client.InspectImage(id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	desc := fmt.Sprintf("ID      : %v\n", runewidth.Truncate(image.ID, fixedBodyRWidth-8, "..."))
-	desc += fmt.Sprintf("Created : %s\n", image.Created.Format("2006-01-02 15:04:05"))
-	desc += fmt.Sprintf("Size    : %s\n", convertSizeToHumanRedable(image.Size))
-	desc += fmt.Sprintf("Cmd     : %v\n", formatCmd(image.Config.Cmd))
-	desc += fmt.Sprintf("Volumes : %v\n", formatImageVolumes(image.Config.Volumes))
-	return desc
-}
-
-func buildImageView(m model) (string, string) {
-	var bodyL, bodyR string
-	for i, choice := range m.images {
-		cursor := " " // default cursor
-		check := " "
-		if m.cursor == i {
-			cursor = "❯"
-			bodyR = buildImageDescShort(choice.id)
-		}
-		name := choice.name
-		if _, ok := m.selected[i]; ok {
-			check = checkStyle.Render("✔")
-		}
-		name = padItemName(name, maxImageNameWidth)
-		row := fmt.Sprintf("%s %s %s", cursor, check, name)
-		bodyL += row
-	}
-	padBodyHeight(&bodyL, len(m.images)+2)
-	return bodyLStyle.Render(bodyL), bodyRStyle.Render(bodyR)
-}
-
-// ----------------------------- container view -----------------------------
-
 func buildContainerDescShort(id string) string {
 	client, err := docker.NewClientFromEnv()
 	if err != nil {

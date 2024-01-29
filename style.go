@@ -82,16 +82,8 @@ var (
 	titleStyle = lipgloss.NewStyle().
 			Bold(true)
 
-	hintStyle = lipgloss.NewStyle().
-			Foreground(grey).
-			Align(lipgloss.Left)
-
 	logStyle = lipgloss.NewStyle().
 			Foreground(black)
-
-	selectedNameStyle = lipgloss.NewStyle().
-				Foreground(black).
-				Background(grey)
 
 	checkStyle = lipgloss.NewStyle().
 			Foreground(hotGreen)
@@ -100,7 +92,8 @@ var (
 			Foreground(frenchBlue).
 			Bold(true)
 
-	helpStyle = lipgloss.NewStyle()
-
 	PortMapColStyle = lipgloss.NewStyle().Foreground(paletteA10)
+
+	inUseStyleTrue  = lipgloss.NewStyle().Foreground(green)
+	inUseStyleFalse = lipgloss.NewStyle().Foreground(paletteA2)
 )
