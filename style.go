@@ -48,6 +48,7 @@ const (
 	fixedContentWidth     = fullWidth - fixedPadLR // 86
 	maxContainerNameWidth = 22
 	maxImageNameWidth     = 24
+	maxVolumeNameWidth    = 22
 	prefixWidth           = 6
 	fixedBodyLWidth       = prefixWidth + maxContainerNameWidth // 28 exclude padding
 	fixedBodyRWidth       = 46                                  // exclude padding
@@ -94,7 +95,8 @@ var (
 
 	PortMapColStyle = lipgloss.NewStyle().Foreground(paletteA10)
 
-	inUseStyleTrue       = lipgloss.NewStyle().Foreground(green)
-	inUseStyleFalse      = lipgloss.NewStyle().Foreground(paletteA2)
-	volumeItemInUseStyle = lipgloss.NewStyle().Foreground(paletteA7)
+	inUseTextTrueStyle  = lipgloss.NewStyle().Foreground(green).Bold(true)
+	inUseTextFalseStyle = lipgloss.NewStyle().Foreground(paletteA2)
+	inUseIconTrueStyle  = lipgloss.NewStyle().Foreground(paletteA7)
+	inUseIconFalseStyle = lipgloss.NewStyle()
 )

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	docker "github.com/fsouza/go-dockerclient"
@@ -96,9 +97,9 @@ func formatVolumeInUse(b bool) string {
 	var style lipgloss.Style
 
 	if b {
-		style = inUseStyleTrue
+		style = inUseTextTrueStyle
 	} else {
-		style = inUseStyleFalse
+		style = inUseTextFalseStyle
 	}
 	return style.Render(s)
 }
@@ -122,6 +123,10 @@ func buildVolumeDescShort(volume Volume) string {
 	containers := volume.containers
 	mountPoint := volume.mountPoint
 
+	// calculate how many day since created
+	duration := time.Since(createdAt).Hours()
+	days := int(duration) / 24
+
 	// get first element from result
 	// TODO: display list of containers, might have >1 container per volume
 	var inUse bool
@@ -133,29 +138,36 @@ func buildVolumeDescShort(volume Volume) string {
 	}
 
 	var desc string
-	desc += fmt.Sprintf("Created : %s\n", createdAt)
-	desc += fmt.Sprintf("Mount   : %s\n", formatVolumeMountPoint(mountPoint))
+	desc += fmt.Sprintf("Created : %d days ago\n", days)
 	desc += fmt.Sprintf("Name    : %s\n", formatVolumeName(name))
 	desc += fmt.Sprintf("In Use  : %v\n", formatVolumeInUse(inUse))
 	desc += fmt.Sprintf("Use by  : %s\n", containerName)
+	desc += fmt.Sprintf("Mount   : %s\n", formatVolumeMountPoint(mountPoint))
 
 	return desc
 }
 
 func buildVolumeView(m model) (string, string) {
 	var bodyL, bodyR string
+
 	for i, choice := range m.volumes {
 		cursor := " "
 		check := " "
+		icon := "● "
+
 		if m.cursor == i {
 			cursor = "❯"
 			bodyR = buildVolumeDescShort(choice)
 		}
 
-		name := runewidth.Truncate(choice.name, maxImageNameWidth, "")
+		name := runewidth.Truncate(choice.name, maxVolumeNameWidth, "")
 		if len(choice.containers) > 0 {
-			name = volumeItemInUseStyle.Render(name)
+			icon = inUseIconTrueStyle.Render(icon)
+		} else {
+			icon = inUseIconFalseStyle.Render(icon)
 		}
+
+		name = icon + name
 
 		if _, ok := m.selected[i]; ok {
 			check = checkStyle.Render("✔")
@@ -327,8 +339,8 @@ func buildContainerView(m model) (string, string) {
 		if isProcessing && m.blinkSwitch == on {
 			stateStyle = stateStyle.Copy().Foreground(pitchBlack)
 		}
-		// state := stateStyle.Render("●")
-		state := stateStyle.Render("❖")
+		state := stateStyle.Render("●")
+		// state := stateStyle.Render("❖")
 		name := choice.name
 		name = runewidth.Truncate(name, maxContainerNameWidth, "...")
 		if _, ok := m.selected[i]; ok {
