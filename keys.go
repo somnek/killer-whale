@@ -12,9 +12,9 @@ type keyMap struct {
 	Clear     key.Binding
 	SelectAll key.Binding
 	Tab       key.Binding
-	num1      key.Binding
-	num2      key.Binding
-	num3      key.Binding
+	Page1     key.Binding
+	Page2     key.Binding
+	Page3     key.Binding
 	Toggle    key.Binding
 
 	Remove  key.Binding
@@ -57,6 +57,9 @@ func (k keyMap) FullHelp() [][]key.Binding {
 			k.Kill,
 			k.Stop,
 			k.Start,
+			k.Page1,
+			k.Page2,
+			k.Page3,
 		},
 	}
 }
@@ -91,15 +94,15 @@ var keys = keyMap{
 		key.WithKeys("tab"),
 		key.WithHelp("tab", "switch page"),
 	),
-	num1: key.NewBinding(
+	Page1: key.NewBinding(
 		key.WithKeys("1"),
 		key.WithHelp("1", "Containers Page"),
 	),
-	num2: key.NewBinding(
+	Page2: key.NewBinding(
 		key.WithKeys("2"),
 		key.WithHelp("2", "Images Page"),
 	),
-	num3: key.NewBinding(
+	Page3: key.NewBinding(
 		key.WithKeys("3"),
 		key.WithHelp("3", "Volumes Page"),
 	),

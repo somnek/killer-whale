@@ -308,13 +308,13 @@ func handleCommonKeys(m *model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.help.ShowAll = !m.help.ShowAll
 		return m, nil
 
-	case key.Matches(msg, m.keys.num1): // page 1: containers
+	case key.Matches(msg, m.keys.Page1): // page 1: containers
 		m.setPage(pageContainer)
 
-	case key.Matches(msg, m.keys.num2): // page 2: images
+	case key.Matches(msg, m.keys.Page2): // page 2: images
 		m.setPage(pageImage)
 
-	case key.Matches(msg, m.keys.num3): // page 3: volumes
+	case key.Matches(msg, m.keys.Page3): // page 3: volumes
 		m.setPage(pageVolume)
 
 	case key.Matches(msg, m.keys.Tab): // switch tab
