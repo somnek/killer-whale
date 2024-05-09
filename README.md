@@ -12,7 +12,7 @@ Killer Whale is a Docker client that runs in your terminal. It provides an intui
 2. bulk actions on multiple containers
 3. inspect containers, images, volumes
 
-Thought its tempting to add more features, `killer-whale` meant to be as **easy to use** & as **minimalistic** as possible.
+Though its tempting to add more features, `killer-whale` meant to be as **easy to use** & as **minimalistic** as possible.
 
 ## Usage
 
