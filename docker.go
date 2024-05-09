@@ -40,7 +40,8 @@ func removeImage(c *docker.Client, id string) {
 
 func listImages(c *docker.Client, showAll bool) []docker.APIImages {
 	opts := docker.ListImagesOptions{
-		All: showAll,
+		All:     showAll,
+		Digests: true,
 	}
 	images, err := c.ListImages(opts)
 	if err != nil {
