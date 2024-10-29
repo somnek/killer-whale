@@ -108,6 +108,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// findDangling return a list of Image has name "<none>"
+func findDangling(images []Image) []Image {
+	danglingImages := []Image{}
+	for _, img := range images {
+		if img.name == "<none>" {
+			danglingImages = append(danglingImages, img)
+		}
+	}
+	return danglingImages
+}
+
 // getContainers return a list of Container that are created using
 // this image
 func (img Image) findAssociatedContainersInUse(m model) []Container {
@@ -147,6 +158,42 @@ func handleImageKeys(m model, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch {
+	case key.Matches(msg, m.keys.Clean): // clean
+		client, err := docker.NewClientFromEnv()
+		if err != nil {
+			m.logs += "Failed to create Docker client"
+		}
+
+		res := actionResultImages{}
+
+		// filter dangling images
+		danglingImages := findDangling(m.images)
+		for _, img := range danglingImages {
+			go removeImage(client, img.id)
+			desiredState := "x"
+			addProcess(&m, img.id, desiredState)
+			res.success = append(res.success, img)
+		}
+
+		var logs string
+		successCount, failedCount := len(res.success), len(res.failed)
+
+		if successCount > 0 {
+			logs += fmt.Sprintf(
+				"🗑️ Remove %v image(s)\n",
+				itemCountStyle.Render(fmt.Sprintf("%d", successCount)))
+		}
+
+		if failedCount > 0 {
+			logs += fmt.Sprintf(
+				"🚧 Unable to remove %v image(s)\n",
+				itemCountStyle.Render(fmt.Sprintf("%d", failedCount)))
+		}
+
+		m.logs = logs
+		m.cursor = -1
+		return m, cmd
+
 	case key.Matches(msg, m.keys.Remove): // remove
 		client, err := docker.NewClientFromEnv()
 		if err != nil {

@@ -35,7 +35,10 @@ func removeImage(c *docker.Client, id string) {
 		Force: true,
 	}
 	// just tell em to remove the container that use this image first
-	_ = c.RemoveImageExtended(id, opts)
+	err := c.RemoveImageExtended(id, opts)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func listImages(c *docker.Client, showAll bool) []docker.APIImages {

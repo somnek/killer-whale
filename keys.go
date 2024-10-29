@@ -18,6 +18,7 @@ type keyMap struct {
 	Toggle    key.Binding
 
 	Remove  key.Binding
+	Clean   key.Binding
 	Restart key.Binding
 	Kill    key.Binding
 	Stop    key.Binding
@@ -57,6 +58,7 @@ func (k keyMap) FullHelp() [][]key.Binding {
 			k.Kill,
 			k.Stop,
 			k.Start,
+			k.Clean,
 			k.Page1,
 			k.Page2,
 			k.Page3,
@@ -113,6 +115,10 @@ var keys = keyMap{
 	Remove: key.NewBinding(
 		key.WithKeys("X"),
 		key.WithHelp("shift+x", "remove"),
+	),
+	Clean: key.NewBinding(
+		key.WithKeys("C"),
+		key.WithHelp("shift+c", "clean"),
 	),
 	Restart: key.NewBinding(
 		key.WithKeys("r"),
