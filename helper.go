@@ -413,9 +413,13 @@ func getImages() []Image {
 		var name string
 		if len(tags) > 0 {
 			name = tags[0]
-			c := Image{name: name, id: c.ID}
-			images = append(images, c)
+		} else {
+			// dangling image
+			name = "<none>"
 		}
+		c := Image{name: name, id: c.ID}
+		images = append(images, c)
+
 	}
 	return images
 }

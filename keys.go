@@ -96,15 +96,15 @@ var keys = keyMap{
 	),
 	Page1: key.NewBinding(
 		key.WithKeys("1"),
-		key.WithHelp("1", "Containers Page"),
+		key.WithHelp("1", "containers"),
 	),
 	Page2: key.NewBinding(
 		key.WithKeys("2"),
-		key.WithHelp("2", "Images Page"),
+		key.WithHelp("2", "images"),
 	),
 	Page3: key.NewBinding(
 		key.WithKeys("3"),
-		key.WithHelp("3", "Volumes Page"),
+		key.WithHelp("3", "volumes"),
 	),
 	Toggle: key.NewBinding(
 		key.WithKeys(" ", "enter"),
